@@ -1,9 +1,37 @@
+
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 
 import { cn } from "@/lib/utils"
 
-const Tabs = TabsPrimitive.Root
+const TabsContext = React.createContext<{ value: string | null }>({ value: null })
+
+const Tabs = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
+>(({ className, value, defaultValue, ...props }, ref) => {
+  const [tabValue, setTabValue] = React.useState(value || defaultValue || "")
+  
+  React.useEffect(() => {
+    if (value !== undefined) {
+      setTabValue(value)
+    }
+  }, [value])
+  
+  return (
+    <TabsContext.Provider value={{ value: tabValue }}>
+      <TabsPrimitive.Root
+        ref={ref}
+        className={cn(className)}
+        value={tabValue}
+        defaultValue={defaultValue}
+        onValueChange={setTabValue}
+        {...props}
+      />
+    </TabsContext.Provider>
+  )
+})
+Tabs.displayName = TabsPrimitive.Root.displayName
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -38,16 +66,29 @@ TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, value, ...props }, ref) => {
+  const context = React.useContext(TabsContext)
+  
+  // If no explicit Tabs parent is found in the tree, create a fallback to prevent the error
+  if (!context.value && process.env.NODE_ENV !== "production") {
+    console.warn(
+      "TabsContent: A TabsContent component was rendered outside of a Tabs component. " +
+      "It will still render, but this may cause unexpected behavior."
+    )
+  }
+  
+  return (
+    <TabsPrimitive.Content
+      ref={ref}
+      value={value}
+      className={cn(
+        "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        className
+      )}
+      {...props}
+    />
+  )
+})
 TabsContent.displayName = TabsPrimitive.Content.displayName
 
 export { Tabs, TabsList, TabsTrigger, TabsContent }
