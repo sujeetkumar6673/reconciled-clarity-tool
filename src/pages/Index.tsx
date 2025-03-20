@@ -1,12 +1,107 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState, useEffect } from 'react';
+import Navbar from '@/components/Navbar';
+import FileUpload from '@/components/FileUpload';
+import DataTable from '@/components/DataTable';
+import AnomalySection from '@/components/AnomalySection';
+import InsightsPanel from '@/components/InsightsPanel';
+import { ArrowDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
+      <Navbar />
+      
+      {/* Hero Section */}
+      <section className="pt-32 pb-20 px-4 relative">
+        <div className={`max-w-6xl mx-auto text-center transition-all duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0 transform translate-y-10'}`}>
+          <div className="inline-block mb-4">
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+              Financial Reconciliation Platform
+            </span>
+          </div>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">
+            Intelligent Reconciliation
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
+            Advanced AI-powered platform for seamless financial reconciliation, anomaly detection, and intelligent insights.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button size="lg" className="px-8 py-6 rounded-full text-lg">
+              Get Started
+            </Button>
+            <Button size="lg" variant="outline" className="px-8 py-6 rounded-full text-lg">
+              Learn More
+            </Button>
+          </div>
+
+          <div className="mt-24 animate-bounce">
+            <a href="#upload" className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-all">
+              <ArrowDown className="h-6 w-6 text-blue-500" />
+            </a>
+          </div>
+        </div>
+      </section>
+      
+      {/* File Upload Section */}
+      <section id="upload" className="py-20 px-4 bg-white dark:bg-gray-900">
+        <div className="max-w-6xl mx-auto animate-fade-in-up">
+          <FileUpload />
+        </div>
+      </section>
+      
+      {/* Data Table Section */}
+      <section id="data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
+        <div className="max-w-6xl mx-auto animate-fade-in-up">
+          <DataTable />
+        </div>
+      </section>
+      
+      {/* Anomaly Detection Section */}
+      <section id="anomalies" className="py-20 px-4 bg-white dark:bg-gray-900">
+        <div className="max-w-6xl mx-auto animate-fade-in-up">
+          <AnomalySection />
+        </div>
+      </section>
+      
+      {/* AI Insights Section */}
+      <section id="insights" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
+        <div className="max-w-6xl mx-auto animate-fade-in-up">
+          <InsightsPanel />
+        </div>
+      </section>
+      
+      {/* Footer */}
+      <footer className="py-12 px-4 bg-gray-900 text-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-6 md:mb-0">
+              <span className="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
+                Reconciled
+              </span>
+              <p className="mt-2 text-gray-400 text-sm">
+                Advanced reconciliation platform for financial analysis
+              </p>
+            </div>
+            <div className="flex space-x-8">
+              <a href="#" className="text-gray-300 hover:text-white transition-colors">About</a>
+              <a href="#" className="text-gray-300 hover:text-white transition-colors">Features</a>
+              <a href="#" className="text-gray-300 hover:text-white transition-colors">Pricing</a>
+              <a href="#" className="text-gray-300 hover:text-white transition-colors">Contact</a>
+            </div>
+          </div>
+          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm">
+            &copy; {new Date().getFullYear()} Reconciled. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
