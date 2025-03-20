@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { UploadCloud, File, CheckCircle, XCircle } from 'lucide-react';
+import { UploadCloud, File, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { parseCSV } from '@/lib/csv-parser';
+import { parseCSV, DynamicColumnData } from '@/lib/csv-parser';
 
 export interface ReconciliationData {
   id: string;
@@ -16,7 +16,7 @@ export interface ReconciliationData {
 }
 
 interface FileUploadProps {
-  onDataProcessed?: (data: ReconciliationData[]) => void;
+  onDataProcessed?: (data: DynamicColumnData[], headers: string[]) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
@@ -82,11 +82,18 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
     setIsUploading(true);
 
     try {
-      const allData: ReconciliationData[] = [];
+      const allData: DynamicColumnData[] = [];
+      let allHeaders: string[] = [];
       
       for (const file of files) {
         if (file.name.toLowerCase().endsWith('.csv')) {
           const text = await file.text();
+          
+          const firstLine = text.split('\n')[0];
+          const headers = firstLine.split(',').map(h => h.trim());
+          
+          allHeaders = [...new Set([...allHeaders, ...headers])];
+          
           const parsedData = parseCSV(text, file.name);
           allData.push(...parsedData);
         }
@@ -96,7 +103,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
         toast.warning('No valid data found in the uploaded files');
       } else {
         if (onDataProcessed) {
-          onDataProcessed(allData);
+          onDataProcessed(allData, allHeaders);
         }
         toast.success(`Successfully processed ${allData.length} records`);
       }

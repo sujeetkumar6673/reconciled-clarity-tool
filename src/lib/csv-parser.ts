@@ -1,7 +1,14 @@
 
 import { ReconciliationData } from '@/components/FileUpload';
 
-export function parseCSV(csvText: string, fileName: string): ReconciliationData[] {
+export interface DynamicColumnData {
+  [key: string]: string | number;
+  id: string;
+  source: string;
+  status: 'Reconciled' | 'Pending' | 'Unmatched';
+}
+
+export function parseCSV(csvText: string, fileName: string): DynamicColumnData[] {
   // Split the CSV text into lines
   const lines = csvText.split('\n').filter(line => line.trim() !== '');
   
@@ -11,7 +18,7 @@ export function parseCSV(csvText: string, fileName: string): ReconciliationData[
   
   // Parse header row to get field names
   const headers = lines[0].split(',').map(header => header.trim());
-  const result: ReconciliationData[] = [];
+  const result: DynamicColumnData[] = [];
   
   // Process data rows
   for (let i = 1; i < lines.length; i++) {
@@ -37,41 +44,28 @@ export function parseCSV(csvText: string, fileName: string): ReconciliationData[
     }
     values.push(currentValue); // Add the last value
     
-    // Map CSV fields to ReconciliationData structure
-    // This is a basic mapping that assumes specific columns exist
-    const rowData: Partial<ReconciliationData> = {
+    // Create object with dynamic column names from headers
+    const rowData: DynamicColumnData = {
       id: `${fileName}-${i}`, // Generate a unique ID
       source: fileName,
       status: determineStatus(), // Random status for demo
     };
     
-    // Map fields based on common header names
+    // Map all fields based on header names
     headers.forEach((header, index) => {
       const value = values[index]?.trim() || '';
-      const lowerHeader = header.toLowerCase();
       
-      if (lowerHeader.includes('date')) {
-        rowData.date = value;
-      } else if (lowerHeader.includes('descr')) {
-        rowData.description = value;
-      } else if (lowerHeader.includes('categ') || lowerHeader.includes('type')) {
-        rowData.category = value;
-      } else if (lowerHeader.includes('amount')) {
-        rowData.amount = parseFloat(value.replace(/[^0-9.-]+/g, '')) || 0;
+      // Try to convert numeric values
+      if (/^-?\d+(\.\d+)?$/.test(value)) {
+        rowData[header] = parseFloat(value);
+      } else {
+        rowData[header] = value;
       }
     });
     
-    // Ensure all required fields are present
-    if (rowData.date && (rowData.description || rowData.category)) {
-      result.push({
-        id: rowData.id || `unknown-${i}`,
-        date: rowData.date || new Date().toISOString().slice(0, 10),
-        description: rowData.description || 'No description',
-        category: rowData.category || 'Uncategorized',
-        amount: rowData.amount || 0,
-        status: rowData.status || 'Pending',
-        source: rowData.source || fileName
-      });
+    // Only add if we have some valid data
+    if (Object.keys(rowData).length > 3) { // More than just id, source, status
+      result.push(rowData);
     }
   }
   

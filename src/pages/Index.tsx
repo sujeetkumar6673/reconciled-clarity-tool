@@ -1,23 +1,27 @@
+
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import FileUpload, { ReconciliationData } from '@/components/FileUpload';
-import ReconciliationTable from '@/components/ReconciliationTable';
+import FileUpload from '@/components/FileUpload';
+import DynamicTable from '@/components/DynamicTable';
 import AnomalySection from '@/components/AnomalySection';
 import InsightsPanel from '@/components/InsightsPanel';
 import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { DynamicColumnData } from '@/lib/csv-parser';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [reconciliationData, setReconciliationData] = useState<ReconciliationData[]>([]);
+  const [tableData, setTableData] = useState<DynamicColumnData[]>([]);
+  const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  const handleDataProcessed = (data: ReconciliationData[]) => {
-    setReconciliationData(data);
+  const handleDataProcessed = (data: DynamicColumnData[], headers: string[]) => {
+    setTableData(data);
+    setTableHeaders(headers);
     setShowTable(true);
     
     // Scroll to the data table section
@@ -71,8 +75,8 @@ const Index = () => {
       {/* Data Table Section */}
       <section id="data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          {showTable && reconciliationData.length > 0 ? (
-            <ReconciliationTable data={reconciliationData} />
+          {showTable && tableData.length > 0 ? (
+            <DynamicTable data={tableData} headers={tableHeaders} />
           ) : (
             <div className="text-center py-12">
               <h2 className="text-2xl font-medium mb-4">No Reconciliation Data Yet</h2>
