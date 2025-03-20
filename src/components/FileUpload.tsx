@@ -1,11 +1,25 @@
-
 import React, { useState, useCallback } from 'react';
 import { UploadCloud, File, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { parseCSV } from '@/lib/csv-parser';
 
-const FileUpload = () => {
+export interface ReconciliationData {
+  id: string;
+  date: string;
+  description: string;
+  category: string;
+  amount: number;
+  status: 'Reconciled' | 'Pending' | 'Unmatched';
+  source: string;
+}
+
+interface FileUploadProps {
+  onDataProcessed?: (data: ReconciliationData[]) => void;
+}
+
+const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -67,13 +81,32 @@ const FileUpload = () => {
 
     setIsUploading(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const allData: ReconciliationData[] = [];
+      
+      for (const file of files) {
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          const text = await file.text();
+          const parsedData = parseCSV(text, file.name);
+          allData.push(...parsedData);
+        }
+      }
+
+      if (allData.length === 0) {
+        toast.warning('No valid data found in the uploaded files');
+      } else {
+        if (onDataProcessed) {
+          onDataProcessed(allData);
+        }
+        toast.success(`Successfully processed ${allData.length} records`);
+      }
+    } catch (error) {
+      console.error('Error processing files:', error);
+      toast.error('Error processing files. Please check file format.');
+    } finally {
       setIsUploading(false);
-      toast.success('Files uploaded successfully');
-      // Clear files after successful upload
       setFiles([]);
-    }, 2000);
+    }
   };
 
   const getFileIcon = (fileName: string) => {
@@ -182,12 +215,12 @@ const FileUpload = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Uploading...
+                  Processing...
                 </>
               ) : (
                 <>
                   <UploadCloud className="mr-2 h-4 w-4" />
-                  Upload Files
+                  Process Files
                 </>
               )}
             </Button>

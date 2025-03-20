@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import FileUpload from '@/components/FileUpload';
-import DataTable from '@/components/DataTable';
+import FileUpload, { ReconciliationData } from '@/components/FileUpload';
+import ReconciliationTable from '@/components/ReconciliationTable';
 import AnomalySection from '@/components/AnomalySection';
 import InsightsPanel from '@/components/InsightsPanel';
 import { ArrowDown } from 'lucide-react';
@@ -10,10 +9,22 @@ import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [reconciliationData, setReconciliationData] = useState<ReconciliationData[]>([]);
+  const [showTable, setShowTable] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  const handleDataProcessed = (data: ReconciliationData[]) => {
+    setReconciliationData(data);
+    setShowTable(true);
+    
+    // Scroll to the data table section
+    setTimeout(() => {
+      document.getElementById('data')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
@@ -34,7 +45,7 @@ const Index = () => {
             Advanced AI-powered platform for seamless financial reconciliation, anomaly detection, and intelligent insights.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="px-8 py-6 rounded-full text-lg">
+            <Button size="lg" className="px-8 py-6 rounded-full text-lg" onClick={() => document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' })}>
               Get Started
             </Button>
             <Button size="lg" variant="outline" className="px-8 py-6 rounded-full text-lg">
@@ -53,14 +64,26 @@ const Index = () => {
       {/* File Upload Section */}
       <section id="upload" className="py-20 px-4 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          <FileUpload />
+          <FileUpload onDataProcessed={handleDataProcessed} />
         </div>
       </section>
       
       {/* Data Table Section */}
       <section id="data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          <DataTable />
+          {showTable && reconciliationData.length > 0 ? (
+            <ReconciliationTable data={reconciliationData} />
+          ) : (
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-medium mb-4">No Reconciliation Data Yet</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+                Upload your CSV files in the section above to view your reconciliation data here.
+              </p>
+              <Button onClick={() => document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' })}>
+                Go to Upload Section
+              </Button>
+            </div>
+          )}
         </div>
       </section>
       
