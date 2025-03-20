@@ -121,6 +121,63 @@ const AnomalySection = () => {
     }
   };
 
+  // Function to render anomaly cards
+  const renderAnomalyCards = () => {
+    if (filteredAnomalies.length > 0) {
+      return filteredAnomalies.map(anomaly => (
+        <div 
+          key={anomaly.id}
+          className="p-4 rounded-lg border bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="font-medium flex items-center">
+                {getCategoryIcon(anomaly.category)}
+                <span className="ml-2">{anomaly.title}</span>
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {anomaly.description}
+              </p>
+            </div>
+            <Badge 
+              className={cn(
+                "ml-2",
+                getSeverityColor(anomaly.severity)
+              )}
+            >
+              {anomaly.severity} priority
+            </Badge>
+          </div>
+          <div className="mt-3 pt-3 border-t flex items-center justify-between text-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center">
+                <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                {anomaly.date}
+              </span>
+              <span className="flex items-center">
+                <DollarSign className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                {anomaly.impact}
+              </span>
+            </div>
+            <Badge variant={anomaly.status === 'resolved' ? 'outline' : 'destructive'}>
+              {anomaly.status}
+            </Badge>
+          </div>
+        </div>
+      ));
+    } else {
+      return (
+        <div className="text-center py-12">
+          <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">No anomalies found</h3>
+          <p className="text-muted-foreground">
+            Try changing your filters to see more results
+          </p>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       <div className="mb-8">
@@ -253,92 +310,42 @@ const AnomalySection = () => {
                   <TabsTrigger value="unresolved">Unresolved</TabsTrigger>
                   <TabsTrigger value="resolved">Resolved</TabsTrigger>
                 </TabsList>
+                
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {['balance', 'duplicate', 'missing', 'timing', 'unclassified'].map(category => (
+                    <Badge
+                      key={category}
+                      variant={selectedCategory === category ? 'default' : 'outline'}
+                      className="cursor-pointer capitalize"
+                      onClick={() => 
+                        setSelectedCategory(selectedCategory === category ? null : category)
+                      }
+                    >
+                      {getCategoryIcon(category)}
+                      <span className="ml-1">{category}</span>
+                    </Badge>
+                  ))}
+                </div>
+                
+                <TabsContent value="all" className="space-y-4 mt-0">
+                  {renderAnomalyCards()}
+                </TabsContent>
+                
+                <TabsContent value="high" className="space-y-4 mt-0">
+                  {renderAnomalyCards()}
+                </TabsContent>
+                
+                <TabsContent value="unresolved" className="space-y-4 mt-0">
+                  {renderAnomalyCards()}
+                </TabsContent>
+                
+                <TabsContent value="resolved" className="space-y-4 mt-0">
+                  {renderAnomalyCards()}
+                </TabsContent>
               </Tabs>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {['balance', 'duplicate', 'missing', 'timing', 'unclassified'].map(category => (
-                  <Badge
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    className="cursor-pointer capitalize"
-                    onClick={() => 
-                      setSelectedCategory(selectedCategory === category ? null : category)
-                    }
-                  >
-                    {getCategoryIcon(category)}
-                    <span className="ml-1">{category}</span>
-                  </Badge>
-                ))}
-              </div>
             </CardHeader>
             <CardContent>
-              <TabsContent value="all" className="space-y-4 mt-0">
-                {filteredAnomalies.length > 0 ? (
-                  filteredAnomalies.map(anomaly => (
-                    <div 
-                      key={anomaly.id}
-                      className="p-4 rounded-lg border bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-medium flex items-center">
-                            {getCategoryIcon(anomaly.category)}
-                            <span className="ml-2">{anomaly.title}</span>
-                          </h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {anomaly.description}
-                          </p>
-                        </div>
-                        <Badge 
-                          className={cn(
-                            "ml-2",
-                            getSeverityColor(anomaly.severity)
-                          )}
-                        >
-                          {anomaly.severity} priority
-                        </Badge>
-                      </div>
-                      <div className="mt-3 pt-3 border-t flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className="flex items-center">
-                            <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                            {anomaly.date}
-                          </span>
-                          <span className="flex items-center">
-                            <DollarSign className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                            {anomaly.impact}
-                          </span>
-                        </div>
-                        <Badge variant={anomaly.status === 'resolved' ? 'outline' : 'destructive'}>
-                          {anomaly.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-12">
-                    <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">No anomalies found</h3>
-                    <p className="text-muted-foreground">
-                      Try changing your filters to see more results
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="high" className="space-y-4 mt-0">
-                {/* Same content structure as "all" tab */}
-                {/* This will be automatically filtered by our filteredAnomalies logic */}
-              </TabsContent>
-              
-              <TabsContent value="unresolved" className="space-y-4 mt-0">
-                {/* Same content structure as "all" tab */}
-                {/* This will be automatically filtered by our filteredAnomalies logic */}
-              </TabsContent>
-              
-              <TabsContent value="resolved" className="space-y-4 mt-0">
-                {/* Same content structure as "all" tab */}
-                {/* This will be automatically filtered by our filteredAnomalies logic */}
-              </TabsContent>
+              {/* Content moved to TabsContent components */}
             </CardContent>
             <CardFooter>
               <Button className="w-full">View All Anomalies</Button>
