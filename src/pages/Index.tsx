@@ -43,10 +43,10 @@ const Index = () => {
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">
-            Intelligent Reconciliation
+            Smart-Recon
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
-            Advanced AI-powered platform for seamless financial reconciliation, anomaly detection, and intelligent insights.
+            Smarter Reconciliation and Anomaly Detection using Gen AI
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" className="px-8 py-6 rounded-full text-lg" onClick={() => document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -111,10 +111,10 @@ const Index = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-6 md:mb-0">
               <span className="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
-                Reconciled
+                Smart-Recon
               </span>
               <p className="mt-2 text-gray-400 text-sm">
-                Advanced reconciliation platform for financial analysis
+                Smarter Reconciliation and Anomaly Detection using Gen AI
               </p>
             </div>
             <div className="flex space-x-8">
@@ -125,7 +125,7 @@ const Index = () => {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} Reconciled. All rights reserved.
+            &copy; {new Date().getFullYear()} Smart-Recon. All rights reserved.
           </div>
         </div>
       </footer>

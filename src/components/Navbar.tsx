@@ -42,7 +42,7 @@ export const Navbar = () => {
       <div className="flex items-center">
         <Link to="/" className="flex items-center space-x-3">
           <span className="font-bold text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400">
-            Reconciled
+            Smart-Recon
           </span>
         </Link>
       </div>
