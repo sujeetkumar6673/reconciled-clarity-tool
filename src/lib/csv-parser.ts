@@ -6,9 +6,10 @@ export interface DynamicColumnData {
   id: string;
   source: string;
   status: 'Reconciled' | 'Pending' | 'Unmatched';
+  dataType: 'current' | 'historical';
 }
 
-export function parseCSV(csvText: string, fileName: string): DynamicColumnData[] {
+export function parseCSV(csvText: string, fileName: string, dataType: 'current' | 'historical'): DynamicColumnData[] {
   // Split the CSV text into lines
   const lines = csvText.split('\n').filter(line => line.trim() !== '');
   
@@ -49,6 +50,7 @@ export function parseCSV(csvText: string, fileName: string): DynamicColumnData[]
       id: `${fileName}-${i}`, // Generate a unique ID
       source: fileName,
       status: determineStatus(), // Random status for demo
+      dataType: dataType, // Add the data type
     };
     
     // Map all fields based on header names
@@ -64,7 +66,7 @@ export function parseCSV(csvText: string, fileName: string): DynamicColumnData[]
     });
     
     // Only add if we have some valid data
-    if (Object.keys(rowData).length > 3) { // More than just id, source, status
+    if (Object.keys(rowData).length > 4) { // More than just id, source, status, dataType
       result.push(rowData);
     }
   }

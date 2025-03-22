@@ -1,9 +1,11 @@
+
 import React, { useState, useCallback } from 'react';
-import { UploadCloud, File, XCircle } from 'lucide-react';
+import { UploadCloud, FileUp, History, File, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { parseCSV, DynamicColumnData } from '@/lib/csv-parser';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export interface ReconciliationData {
   id: string;
@@ -23,6 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [dataType, setDataType] = useState<'current' | 'historical'>('current');
 
   const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -94,7 +97,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
           
           allHeaders = [...new Set([...allHeaders, ...headers])];
           
-          const parsedData = parseCSV(text, file.name);
+          const parsedData = parseCSV(text, file.name, dataType);
           allData.push(...parsedData);
         }
       }
@@ -105,7 +108,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
         if (onDataProcessed) {
           onDataProcessed(allData, allHeaders);
         }
-        toast.success(`Successfully processed ${allData.length} records`);
+        toast.success(`Successfully processed ${allData.length} ${dataType} data records`);
       }
     } catch (error) {
       console.error('Error processing files:', error);
@@ -129,61 +132,96 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
     }
   };
 
+  const renderUploadArea = () => (
+    <div
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={cn(
+        "border-2 border-dashed rounded-xl p-8 transition-all duration-300 text-center",
+        isDragging 
+          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
+          : "border-gray-200 dark:border-gray-800 hover:border-blue-400 dark:hover:border-blue-700"
+      )}
+    >
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <div className={cn(
+          "h-16 w-16 rounded-full flex items-center justify-center transition-all",
+          isDragging ? "bg-blue-100 dark:bg-blue-900/30" : "bg-gray-100 dark:bg-gray-800"
+        )}>
+          <UploadCloud 
+            className={cn(
+              "h-8 w-8 transition-all",
+              isDragging ? "text-blue-500" : "text-gray-500 dark:text-gray-400"
+            )} 
+          />
+        </div>
+        <div className="space-y-1">
+          <p className="font-medium">
+            {isDragging ? "Drop files here" : "Drag & drop files here"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Supports CSV and Excel files
+          </p>
+        </div>
+        <div className="relative">
+          <Button className="relative z-10" onClick={() => document.getElementById(`file-upload-${dataType}`)?.click()}>
+            Select Files
+          </Button>
+          <input
+            id={`file-upload-${dataType}`}
+            type="file"
+            multiple
+            accept=".csv,.xlsx,.xls"
+            className="sr-only"
+            onChange={onFileChange}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4">
       <div className="mb-8">
         <h2 className="text-2xl font-medium text-center mb-2">Upload Reconciliation Files</h2>
         <p className="text-muted-foreground text-center max-w-2xl mx-auto">
-          Drag and drop your CSV or Excel files to start analyzing reconciliation data
+          Choose the data type and upload your CSV or Excel files to start analyzing reconciliation data
         </p>
       </div>
 
-      <div
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        className={cn(
-          "border-2 border-dashed rounded-xl p-8 transition-all duration-300 text-center",
-          isDragging 
-            ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20" 
-            : "border-gray-200 dark:border-gray-800 hover:border-blue-400 dark:hover:border-blue-700"
-        )}
-      >
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className={cn(
-            "h-16 w-16 rounded-full flex items-center justify-center transition-all",
-            isDragging ? "bg-blue-100 dark:bg-blue-900/30" : "bg-gray-100 dark:bg-gray-800"
-          )}>
-            <UploadCloud 
-              className={cn(
-                "h-8 w-8 transition-all",
-                isDragging ? "text-blue-500" : "text-gray-500 dark:text-gray-400"
-              )} 
-            />
-          </div>
-          <div className="space-y-1">
-            <p className="font-medium">
-              {isDragging ? "Drop files here" : "Drag & drop files here"}
-            </p>
+      <Tabs defaultValue="current" onValueChange={(value) => setDataType(value as 'current' | 'historical')} className="w-full">
+        <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto mb-6">
+          <TabsTrigger value="current" className="flex items-center gap-2">
+            <FileUp className="h-4 w-4" />
+            Current/Realtime Data
+          </TabsTrigger>
+          <TabsTrigger value="historical" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Historical Data
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="current">
+          <div className="space-y-2 mb-4">
+            <h3 className="text-lg font-medium">Current/Realtime Data</h3>
             <p className="text-sm text-muted-foreground">
-              Supports CSV and Excel files
+              Upload the most recent data files for reconciliation against your current records.
             </p>
           </div>
-          <div className="relative">
-            <Button className="relative z-10" onClick={() => document.getElementById('file-upload')?.click()}>
-              Select Files
-            </Button>
-            <input
-              id="file-upload"
-              type="file"
-              multiple
-              accept=".csv,.xlsx,.xls"
-              className="sr-only"
-              onChange={onFileChange}
-            />
+          {renderUploadArea()}
+        </TabsContent>
+        
+        <TabsContent value="historical">
+          <div className="space-y-2 mb-4">
+            <h3 className="text-lg font-medium">Historical Data</h3>
+            <p className="text-sm text-muted-foreground">
+              Upload past data files for historical analysis and trend identification.
+            </p>
           </div>
-        </div>
-      </div>
+          {renderUploadArea()}
+        </TabsContent>
+      </Tabs>
 
       {files.length > 0 && (
         <div className="mt-8 animate-fade-in">
@@ -227,7 +265,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
               ) : (
                 <>
                   <UploadCloud className="mr-2 h-4 w-4" />
-                  Process Files
+                  Process {dataType === 'current' ? 'Current' : 'Historical'} Files
                 </>
               )}
             </Button>

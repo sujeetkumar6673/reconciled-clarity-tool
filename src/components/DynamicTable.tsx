@@ -27,13 +27,14 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dataTypeFilter, setDataTypeFilter] = useState<string>('all');
   const itemsPerPage = 10;
 
   // Get all columns, prioritizing important ones and ensuring status/source are at the end
   const columns = useMemo(() => {
     // Make a prioritized list of columns
     const priorityColumns = ['id', 'date', 'description', 'category', 'amount'];
-    const endColumns = ['status', 'source'];
+    const endColumns = ['dataType', 'status', 'source'];
     
     // Get all unique keys from data objects
     const allKeys = new Set<string>();
@@ -58,7 +59,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
       }
     });
     
-    // End with status and source (if they exist in the data)
+    // End with dataType, status and source (if they exist in the data)
     endColumns.forEach(col => {
       if (allKeys.has(col)) {
         result.push(col);
@@ -82,6 +83,11 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
   const filteredData = data.filter(item => {
     // Apply status filter
     if (statusFilter !== 'all' && item.status !== statusFilter) {
+      return false;
+    }
+    
+    // Apply data type filter
+    if (dataTypeFilter !== 'all' && item.dataType !== dataTypeFilter) {
       return false;
     }
     
@@ -139,6 +145,17 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
     }
   };
+  
+  const getDataTypeColor = (dataType: string) => {
+    switch (dataType) {
+      case 'current':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'historical':
+        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+    }
+  };
 
   // Format cell value based on content type
   const formatCellValue = (value: any, columnName: string) => {
@@ -153,6 +170,17 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
           getStatusColor(value)
         )}>
           {value}
+        </span>
+      );
+    }
+    
+    if (columnName === 'dataType' && typeof value === 'string') {
+      return (
+        <span className={cn(
+          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+          getDataTypeColor(value)
+        )}>
+          {value === 'current' ? 'Current' : 'Historical'}
         </span>
       );
     }
@@ -202,11 +230,24 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
             </SelectContent>
           </Select>
         </div>
+        <div className="w-full md:w-48">
+          <Select value={dataTypeFilter} onValueChange={setDataTypeFilter}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by data type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Data Types</SelectItem>
+              <SelectItem value="current">Current Data</SelectItem>
+              <SelectItem value="historical">Historical Data</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <Button
           variant="outline"
           onClick={() => {
             setSearchTerm('');
             setStatusFilter('all');
+            setDataTypeFilter('all');
           }}
         >
           Reset Filters
