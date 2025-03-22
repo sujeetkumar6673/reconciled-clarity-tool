@@ -8,10 +8,12 @@ import InsightsPanel from '@/components/InsightsPanel';
 import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DynamicColumnData } from '@/lib/csv-parser';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [tableData, setTableData] = useState<DynamicColumnData[]>([]);
+  const [currentData, setCurrentData] = useState<DynamicColumnData[]>([]);
+  const [historicalData, setHistoricalData] = useState<DynamicColumnData[]>([]);
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
 
@@ -19,8 +21,13 @@ const Index = () => {
     setIsLoaded(true);
   }, []);
 
-  const handleDataProcessed = (data: DynamicColumnData[], headers: string[]) => {
-    setTableData(data);
+  const handleDataProcessed = (
+    currentData: DynamicColumnData[], 
+    historicalData: DynamicColumnData[], 
+    headers: string[]
+  ) => {
+    setCurrentData(currentData);
+    setHistoricalData(historicalData);
     setTableHeaders(headers);
     setShowTable(true);
     
@@ -75,8 +82,45 @@ const Index = () => {
       {/* Data Table Section */}
       <section id="data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          {showTable && tableData.length > 0 ? (
-            <DynamicTable data={tableData} headers={tableHeaders} />
+          {showTable && (currentData.length > 0 || historicalData.length > 0) ? (
+            <div className="space-y-8">
+              <Tabs defaultValue="current" className="w-full">
+                <div className="flex justify-center mb-6">
+                  <TabsList>
+                    <TabsTrigger value="current" className="px-6">Current Data</TabsTrigger>
+                    <TabsTrigger value="historical" className="px-6">Historical Data</TabsTrigger>
+                  </TabsList>
+                </div>
+                
+                <TabsContent value="current">
+                  <h2 className="text-2xl font-medium text-center mb-6">Current/Realtime Data</h2>
+                  {currentData.length > 0 ? (
+                    <DynamicTable data={currentData} headers={tableHeaders} />
+                  ) : (
+                    <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                      <h3 className="text-xl font-medium mb-2">No Current Data Available</h3>
+                      <p className="text-muted-foreground max-w-xl mx-auto mb-4">
+                        Please upload current data files to view them here.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="historical">
+                  <h2 className="text-2xl font-medium text-center mb-6">Historical Data</h2>
+                  {historicalData.length > 0 ? (
+                    <DynamicTable data={historicalData} headers={tableHeaders} />
+                  ) : (
+                    <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                      <h3 className="text-xl font-medium mb-2">No Historical Data Available</h3>
+                      <p className="text-muted-foreground max-w-xl mx-auto mb-4">
+                        Please upload historical data files to view them here.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
           ) : (
             <div className="text-center py-12">
               <h2 className="text-2xl font-medium mb-4">No Reconciliation Data Yet</h2>
