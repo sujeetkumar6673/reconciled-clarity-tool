@@ -116,6 +116,9 @@ const Index = () => {
               <p className="mt-2 text-gray-400 text-sm">
                 Smarter Reconciliation and Anomaly Detection using Gen AI
               </p>
+              <p className="mt-1 text-gray-400 text-sm">
+                Developed By: Sujeet Kumar
+              </p>
             </div>
             <div className="flex space-x-8">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">About</a>
