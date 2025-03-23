@@ -92,34 +92,51 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
         }
         
         // Handle the new response format as shown in the screenshot
+        // New format: { message: '...', insights_data: { insights: [...], total_anomalies: number, total_impact: number } }
         if (typeof result === 'object' && !Array.isArray(result)) {
           console.log('Processing object response format');
           
-          // New format: { insights: Array<{bucket_id, bucket_description}>, total_anomalies: number, total_impact: number, message: string }
-          if (result.insights && Array.isArray(result.insights)) {
-            console.log('Processing format with insights array:', result.insights.length, 'insights');
-            insightsArray = result.insights.map(insight => {
-              // Make sure we have the required fields
-              return {
-                bucket_id: insight.bucket_id || 0,
-                bucket_description: insight.bucket_description || "Unknown",
-                anomaly_count: 1, // Default to 1 if not specified
-                sample_companies: insight.sample_companies || [],
-                root_cause: insight.root_cause || "Unknown cause",
-                recommendation: insight.recommendation || "No recommendations available"
-              };
-            });
+          // New format with insights_data object
+          if (result.insights_data && typeof result.insights_data === 'object') {
+            console.log('Processing format with insights_data:', result.insights_data);
             
-            // Get total anomalies and impact from the response
+            // Get the insights array from insights_data
+            if (result.insights_data.insights && Array.isArray(result.insights_data.insights)) {
+              console.log('Processing insights array:', result.insights_data.insights.length, 'insights');
+              insightsArray = result.insights_data.insights.map(insight => {
+                // Make sure we have the required fields
+                return {
+                  bucket_id: insight.bucket_id || 0,
+                  bucket_description: insight.bucket_description || "Unknown",
+                  anomaly_count: insight.anomaly_count || 1, // Default to 1 if not specified
+                  sample_companies: insight.sample_companies || [],
+                  root_cause: insight.root_cause || "Unknown cause",
+                  recommendation: insight.recommendation || "No recommendations available"
+                };
+              });
+              
+              // Get total anomalies and impact from insights_data
+              if (typeof result.insights_data.total_anomalies === 'number') {
+                totalAnomaliesCount = result.insights_data.total_anomalies;
+              }
+              
+              if (typeof result.insights_data.total_impact === 'number') {
+                totalImpactValue = result.insights_data.total_impact;
+              }
+              
+              console.log(`Found ${insightsArray.length} insights with ${totalAnomaliesCount} total anomalies and impact of ${totalImpactValue}`);
+            }
+          }
+          // Check for older formats as fallback
+          else if (result.insights && Array.isArray(result.insights)) {
+            console.log('Processing format with top-level insights array');
+            insightsArray = result.insights;
             if (typeof result.total_anomalies === 'number') {
               totalAnomaliesCount = result.total_anomalies;
             }
-            
             if (typeof result.total_impact === 'number') {
               totalImpactValue = result.total_impact;
             }
-            
-            console.log(`Found ${insightsArray.length} insights with ${totalAnomaliesCount} total anomalies and impact of ${totalImpactValue}`);
           }
           else if (result.data && Array.isArray(result.data)) {
             // Format: { data: [...insights], message: '...' }

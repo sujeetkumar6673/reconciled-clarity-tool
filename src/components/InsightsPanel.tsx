@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Lightbulb, MessageSquare, Brain, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,8 +10,8 @@ import { useAnomalyInsights } from '@/hooks/useAnomalyInsights';
 import { AnomalyItem } from '@/types/anomaly';
 
 const InsightsPanel = () => {
-  const [insights, setInsights] = useState(mockInsights);
-  const [selectedInsight, setSelectedInsight] = useState(mockInsights[0]);
+  const [insights, setInsights] = useState<any[]>([]);
+  const [selectedInsight, setSelectedInsight] = useState<any>(null);
   const [totalAnomalies, setTotalAnomalies] = useState(0);
   
   const { 
@@ -54,6 +55,12 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
     }
   });
 
+  // Initialize with empty insights instead of mock data
+  useEffect(() => {
+    setInsights([]);
+    setSelectedInsight(null);
+  }, []);
+
   // Update total anomalies whenever apiTotalAnomalies changes
   useEffect(() => {
     if (apiTotalAnomalies > 0) {
@@ -62,8 +69,10 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
   }, [apiTotalAnomalies]);
 
   const handleCopyInsight = () => {
-    navigator.clipboard.writeText(selectedInsight.content);
-    toast.success('Insight copied to clipboard');
+    if (selectedInsight) {
+      navigator.clipboard.writeText(selectedInsight.content);
+      toast.success('Insight copied to clipboard');
+    }
   };
 
   const handleGenerateMoreInsights = () => {
@@ -122,12 +131,18 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
         {/* Right column - Selected insight + actions */}
         <div className="lg:col-span-2 space-y-6 animate-fade-in animate-delay-200">
           {/* Selected insight */}
-          {selectedInsight && (
+          {selectedInsight ? (
             <InsightContent
               insight={selectedInsight}
               renderInsightIcon={renderInsightIcon}
               onCopy={handleCopyInsight}
             />
+          ) : (
+            <div className="rounded-lg border p-6 text-center text-muted-foreground">
+              <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-lg font-medium mb-2">No Insights Selected</h3>
+              <p>Generate insights using the button on the left panel to view AI-powered analysis.</p>
+            </div>
           )}
 
           {/* Suggested actions */}
