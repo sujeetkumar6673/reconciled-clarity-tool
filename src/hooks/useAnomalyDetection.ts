@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
 
@@ -13,6 +13,35 @@ interface UseAnomalyDetectionProps {
 export const useAnomalyDetection = ({ onAnomalyDataReceived }: UseAnomalyDetectionProps) => {
   const [isDetecting, setIsDetecting] = useState(false);
   const [resultFile, setResultFile] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  // Reset progress when detection starts/stops
+  useEffect(() => {
+    if (!isDetecting) {
+      setProgress(0);
+    }
+  }, [isDetecting]);
+  
+  // Simulate progress for better UX during API call
+  useEffect(() => {
+    let interval: number | undefined;
+    
+    if (isDetecting && progress < 95) {
+      interval = window.setInterval(() => {
+        setProgress(prevProgress => {
+          // Gradually slow down progress as it gets closer to 95%
+          const increment = Math.max(1, Math.floor((95 - prevProgress) / 10));
+          return Math.min(95, prevProgress + increment);
+        });
+      }, 500);
+    }
+    
+    return () => {
+      if (interval !== undefined) {
+        window.clearInterval(interval);
+      }
+    };
+  }, [isDetecting, progress]);
 
   const parseCsvForTable = (csvData: string) => {
     if (!onAnomalyDataReceived) return;
@@ -75,6 +104,8 @@ export const useAnomalyDetection = ({ onAnomalyDataReceived }: UseAnomalyDetecti
 
   const detectAnomalies = async () => {
     setIsDetecting(true);
+    setProgress(5); // Start with 5% progress
+    
     try {
       toast.info('Starting anomaly detection process...');
       
@@ -85,6 +116,9 @@ export const useAnomalyDetection = ({ onAnomalyDataReceived }: UseAnomalyDetecti
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
+      
+      // Set to 100% when we get the response
+      setProgress(100);
       
       // Check if the response is a CSV file
       const contentType = response.headers.get('content-type');
@@ -130,6 +164,7 @@ export const useAnomalyDetection = ({ onAnomalyDataReceived }: UseAnomalyDetecti
     isDetecting,
     resultFile,
     detectAnomalies,
-    downloadFile
+    downloadFile,
+    progress
   };
 };

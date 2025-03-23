@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Download } from 'lucide-react';
+import { AlertTriangle, Download, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
+import { Progress } from '@/components/ui/progress';
 
 interface AnomalyDetectionButtonProps {
   onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
@@ -15,7 +16,8 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({ onAnoma
     isDetecting, 
     resultFile, 
     detectAnomalies, 
-    downloadFile 
+    downloadFile,
+    progress
   } = useAnomalyDetection({ onAnomalyDataReceived });
 
   return (
@@ -41,6 +43,19 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({ onAnoma
           </>
         )}
       </Button>
+      
+      {isDetecting && (
+        <div className="w-full max-w-md mt-2 space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center">
+              <Brain className="mr-2 h-5 w-5 text-blue-600 animate-pulse" />
+              <span className="text-sm font-medium">Detecting anomalies using GenAI...</span>
+            </div>
+            <span className="text-sm font-medium">{progress}%</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+      )}
       
       {resultFile && (
         <Button 
