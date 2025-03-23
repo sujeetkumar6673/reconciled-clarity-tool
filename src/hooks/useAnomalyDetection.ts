@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -50,15 +49,20 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
-  // Helper function to deduplicate headers while preserving the original ones
+  // Enhanced deduplication function to handle various cases and transformations
   const deduplicateHeaders = (headers: string[]): string[] => {
-    const seen = new Set<string>();
+    const seen = new Map<string, string>();
     return headers.filter(header => {
+      // Create a fully normalized version for comparison (lowercase, no spaces)
       const normalized = header.toLowerCase().replace(/\s+/g, '');
+      
+      // If we've seen this normalized form before, it's a duplicate
       if (seen.has(normalized)) {
         return false;
       }
-      seen.add(normalized);
+      
+      // Mark this normalized form as seen and keep the original header
+      seen.set(normalized, header);
       return true;
     });
   };
@@ -96,7 +100,10 @@ export const useAnomalyDetection = ({
         const hasData = parseCsvForTable(csvData, 
           (data, headers) => {
             if (onAnomalyDataReceived) {
+              // Apply enhanced deduplication to headers
               const deduplicatedHeaders = deduplicateHeaders(headers);
+              console.log('Original headers:', headers);
+              console.log('Deduplicated headers:', deduplicatedHeaders);
               onAnomalyDataReceived(data, deduplicatedHeaders);
             }
           }, 
@@ -116,7 +123,10 @@ export const useAnomalyDetection = ({
         const hasData = parseCsvForTable(mockCsvData, 
           (data, headers) => {
             if (onAnomalyDataReceived) {
+              // Apply enhanced deduplication to headers
               const deduplicatedHeaders = deduplicateHeaders(headers);
+              console.log('Original headers (mock):', headers);
+              console.log('Deduplicated headers (mock):', deduplicatedHeaders);
               onAnomalyDataReceived(data, deduplicatedHeaders);
             }
           }, 
@@ -133,7 +143,10 @@ export const useAnomalyDetection = ({
       const hasData = parseCsvForTable(mockCsvData, 
         (data, headers) => {
           if (onAnomalyDataReceived) {
+            // Apply enhanced deduplication to headers
             const deduplicatedHeaders = deduplicateHeaders(headers);
+            console.log('Original headers (error fallback):', headers);
+            console.log('Deduplicated headers (error fallback):', deduplicatedHeaders);
             onAnomalyDataReceived(data, deduplicatedHeaders);
           }
         }, 

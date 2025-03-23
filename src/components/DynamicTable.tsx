@@ -30,6 +30,19 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
   const [dataTypeFilter, setDataTypeFilter] = useState<string>('all');
   const itemsPerPage = 10;
 
+  // Deduplicate headers to ensure no duplicates in column display
+  const deduplicateHeaders = (headers: string[]): string[] => {
+    const seen = new Map<string, string>();
+    return headers.filter(header => {
+      const normalized = header.toLowerCase().replace(/[\s_-]+/g, '');
+      if (seen.has(normalized)) {
+        return false;
+      }
+      seen.set(normalized, header);
+      return true;
+    });
+  };
+
   // Get all columns, prioritizing important ones and ensuring status/source are at the end
   const columns = useMemo(() => {
     // Make a prioritized list of columns
@@ -42,11 +55,14 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
       Object.keys(item).forEach(key => allKeys.add(key));
     });
     
+    // Deduplicate headers to ensure no duplicates in the actual displayed columns
+    const deduplicatedHeaders = deduplicateHeaders(headers);
+    
     // Start with priority columns (that exist in the data)
     const result: string[] = priorityColumns.filter(col => allKeys.has(col));
     
-    // Add headers that aren't already in the result or in endColumns
-    headers.forEach(header => {
+    // Add deduplicated headers that aren't already in the result or in endColumns
+    deduplicatedHeaders.forEach(header => {
       if (!result.includes(header) && !endColumns.includes(header)) {
         result.push(header);
       }

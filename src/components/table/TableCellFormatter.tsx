@@ -12,10 +12,11 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
     return null;
   }
   
-  // Normalize column name to check against various formats
-  const normalizedColumnName = columnName.toLowerCase().replace(/\s+/g, '');
+  // Enhanced normalization for column names to be more thorough with case and whitespace
+  const normalizedColumnName = columnName.toLowerCase().replace(/[\s_-]+/g, '');
   
-  if (normalizedColumnName === 'status' && typeof value === 'string') {
+  // Handle status fields (any column ending with 'status' or exactly 'status')
+  if ((normalizedColumnName === 'status' || normalizedColumnName.endsWith('status')) && typeof value === 'string') {
     return (
       <span className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
@@ -26,7 +27,8 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
     );
   }
   
-  if (normalizedColumnName === 'datatype' && typeof value === 'string') {
+  // Handle data type fields
+  if ((normalizedColumnName === 'datatype' || normalizedColumnName === 'data_type' || normalizedColumnName === 'datatype') && typeof value === 'string') {
     return (
       <span className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
@@ -37,15 +39,19 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
     );
   }
   
+  // Handle source fields
   if (normalizedColumnName === 'source' && typeof value === 'string') {
     return <span className="text-xs text-gray-500">{value.split('/').pop()}</span>;
   }
   
   if (typeof value === 'number') {
-    // Format numeric values
+    // Format numeric values - enhanced to catch more monetary column patterns
     const isAmount = normalizedColumnName.includes('amount') || 
                      normalizedColumnName.includes('balance') ||
-                     normalizedColumnName.includes('difference');
+                     normalizedColumnName.includes('difference') ||
+                     normalizedColumnName.includes('value') || 
+                     normalizedColumnName.includes('price') ||
+                     normalizedColumnName.includes('cost');
     
     if (isAmount) {
       // For positive/negative numbers, don't use absolute value
@@ -62,40 +68,56 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
 
 // Helper functions
 export const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Reconciled':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-    case 'Pending':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-    case 'Unmatched':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+  const normalizedStatus = status.toLowerCase();
+  
+  if (normalizedStatus.includes('reconciled') || normalizedStatus.includes('resolved') || normalizedStatus.includes('complete')) {
+    return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
   }
+  
+  if (normalizedStatus.includes('pending') || normalizedStatus.includes('in progress') || normalizedStatus.includes('processing')) {
+    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+  }
+  
+  if (normalizedStatus.includes('unmatched') || normalizedStatus.includes('error') || normalizedStatus.includes('failed')) {
+    return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+  }
+  
+  return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
 };
 
 export const getDataTypeColor = (dataType: string) => {
-  switch (dataType) {
-    case 'current':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    case 'historical':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
-    case 'anomaly':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
+  const normalizedType = dataType.toLowerCase();
+  
+  if (normalizedType.includes('current')) {
+    return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
   }
+  
+  if (normalizedType.includes('historical') || normalizedType.includes('history')) {
+    return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
+  }
+  
+  if (normalizedType.includes('anomaly') || normalizedType.includes('error')) {
+    return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+  }
+  
+  return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
 };
 
 export const getDataTypeDisplayValue = (dataType: string) => {
-  switch (dataType) {
-    case 'current':
-      return 'Current';
-    case 'historical':
-      return 'Historical';
-    case 'anomaly':
-      return 'Anomaly';
-    default:
-      return dataType;
+  const normalizedType = dataType.toLowerCase();
+  
+  if (normalizedType.includes('current')) {
+    return 'Current';
   }
+  
+  if (normalizedType.includes('historical') || normalizedType.includes('history')) {
+    return 'Historical';
+  }
+  
+  if (normalizedType.includes('anomaly')) {
+    return 'Anomaly';
+  }
+  
+  // If it doesn't match any of our known types, capitalize first letter
+  return dataType.charAt(0).toUpperCase() + dataType.slice(1);
 };
