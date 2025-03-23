@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, DollarSign, Info } from 'lucide-react';
+import { Calendar, DollarSign, Info, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ export interface AnomalyItem {
   date: string;
   impact: string;
   status: string;
-  // New fields for the AI insights
+  // Fields for the AI insights
   bucket?: string;
   anomalyCount?: number;
   rootCauses?: string[];
@@ -90,7 +90,7 @@ const AnomalyCard: React.FC<AnomalyCardProps> = ({
           <AccordionItem value="item-1" className="border-none">
             <AccordionTrigger className="py-2 text-sm font-medium">
               <span className="flex items-center text-blue-600 dark:text-blue-400">
-                <Info className="h-3.5 w-3.5 mr-1" />
+                <Sparkles className="h-3.5 w-3.5 mr-1" />
                 AI Insights
               </span>
             </AccordionTrigger>
@@ -98,8 +98,8 @@ const AnomalyCard: React.FC<AnomalyCardProps> = ({
               <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md text-sm">
                 {anomaly.bucket && (
                   <div className="mb-2">
-                    <span className="font-medium">Bucket:</span> {anomaly.bucket}
-                    {anomaly.anomalyCount && (
+                    <span className="font-medium">Anomaly Bucket:</span> {anomaly.bucket}
+                    {anomaly.anomalyCount !== undefined && (
                       <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                         {anomaly.anomalyCount} anomalies
                       </span>
@@ -109,7 +109,7 @@ const AnomalyCard: React.FC<AnomalyCardProps> = ({
                 
                 {anomaly.sampleRecords && anomaly.sampleRecords.length > 0 && (
                   <div className="mb-2">
-                    <div className="font-medium mb-1">Sample Record:</div>
+                    <div className="font-medium mb-1">Sample Records:</div>
                     <div className="bg-white dark:bg-gray-900 p-2 rounded border text-xs">
                       {anomaly.sampleRecords.map((record, idx) => (
                         <div key={idx} className="mb-2 last:mb-0">
