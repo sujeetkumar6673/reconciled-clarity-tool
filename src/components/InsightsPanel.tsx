@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Lightbulb, MessageSquare, Brain, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -50,7 +49,6 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
       
       if (formattedInsights.length > 0) {
         setInsights(formattedInsights);
-        // Set the first insight as selected if available
         setSelectedInsight(formattedInsights[0]);
       }
     }

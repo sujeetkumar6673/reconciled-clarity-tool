@@ -23,9 +23,6 @@ const AnomalyList: React.FC<AnomalyListProps> = ({
       } else if (typeof anomaly.anomalyCount === 'string') {
         const parsed = parseInt(anomaly.anomalyCount, 10);
         return !isNaN(parsed) ? total + parsed : total;
-      } else if (typeof anomaly.count === 'number' && !isNaN(anomaly.count)) {
-        // Some APIs might return 'count' instead of 'anomalyCount'
-        return total + anomaly.count;
       }
       return total;
     }, 

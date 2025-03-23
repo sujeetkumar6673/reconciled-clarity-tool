@@ -16,9 +16,9 @@ export const getCategoryByBucketId = (bucketId: number): string => {
   if (bucketId === 1) return 'balance';
   if (bucketId === 2) return 'missing';
   if (bucketId === 8) return 'timing';
-  if (bucketId === 7) return 'duplicate';
+  if (bucketId === 7 || bucketId === 11) return 'duplicate';
   if (bucketId === 5) return 'trend';
-  if (bucketId === 11 || bucketId === 4) return 'unclassified';
+  if (bucketId === 4) return 'unclassified';
   return 'unclassified';
 };
 

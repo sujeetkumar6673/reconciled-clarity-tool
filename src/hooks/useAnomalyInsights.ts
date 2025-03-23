@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { AnomalyItem, InsightResponse } from '@/types/anomaly';
 import { API_BASE_URL, getSeverityByBucketId, getCategoryByBucketId, generateSampleRecordsFromCompanies } from '@/utils/anomalyUtils';
-import { mockInsightsData } from '@/data/mockAnomalyData';
 
 interface UseAnomalyInsightsProps {
   onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
@@ -14,38 +13,6 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
   const [insightsData, setInsightsData] = useState<InsightResponse[]>([]);
   const [totalAnomalies, setTotalAnomalies] = useState<number>(0);
   const [totalImpact, setTotalImpact] = useState<number>(0);
-
-  // Fallback function for mock insights in case of API failure
-  const fallbackToMockInsights = () => {
-    if (!onAnomalyInsightsReceived) return;
-    
-    console.log('Using mock insights data as fallback');
-    
-    // Use the mock data as a fallback
-    const anomalyItems: AnomalyItem[] = mockInsightsData.map((insight, index) => {
-      return {
-        id: index + 1,
-        title: insight.bucket_description,
-        description: `Bucket ${insight.bucket_id}: ${insight.root_cause}`,
-        severity: getSeverityByBucketId(insight.bucket_id),
-        category: getCategoryByBucketId(insight.bucket_id),
-        date: new Date().toISOString().split('T')[0],
-        impact: `$${(Math.random() * 10000 + 500).toFixed(2)}`,
-        status: Math.random() > 0.8 ? 'resolved' : 'unresolved',
-        bucket: `Bucket ${insight.bucket_id}: ${insight.bucket_description}`,
-        anomalyCount: insight.anomaly_count,
-        rootCauses: [insight.root_cause],
-        suggestedActions: [insight.recommendation],
-        sampleRecords: generateSampleRecordsFromCompanies(insight.sample_companies)
-      };
-    });
-    
-    const mockTotalAnomalies = anomalyItems.reduce((total, item) => total + (item.anomalyCount || 0), 0);
-    setTotalAnomalies(mockTotalAnomalies);
-    setInsightsData(mockInsightsData);
-    onAnomalyInsightsReceived(anomalyItems);
-    toast.success('AI insights generated using fallback data!');
-  };
 
   const generateInsights = async () => {
     setIsGeneratingInsights(true);
@@ -124,22 +91,41 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
           throw new Error('Empty response from insights API');
         }
         
+        // Handle the new response format as shown in the screenshot
         if (typeof result === 'object' && !Array.isArray(result)) {
-          // Handle object format
           console.log('Processing object response format');
           
-          if (result.data && Array.isArray(result.data)) {
+          // New format: { insights: Array<{bucket_id, bucket_description}>, total_anomalies: number, total_impact: number, message: string }
+          if (result.insights && Array.isArray(result.insights)) {
+            console.log('Processing format with insights array:', result.insights.length, 'insights');
+            insightsArray = result.insights.map(insight => {
+              // Make sure we have the required fields
+              return {
+                bucket_id: insight.bucket_id || 0,
+                bucket_description: insight.bucket_description || "Unknown",
+                anomaly_count: 1, // Default to 1 if not specified
+                sample_companies: insight.sample_companies || [],
+                root_cause: insight.root_cause || "Unknown cause",
+                recommendation: insight.recommendation || "No recommendations available"
+              };
+            });
+            
+            // Get total anomalies and impact from the response
+            if (typeof result.total_anomalies === 'number') {
+              totalAnomaliesCount = result.total_anomalies;
+            }
+            
+            if (typeof result.total_impact === 'number') {
+              totalImpactValue = result.total_impact;
+            }
+            
+            console.log(`Found ${insightsArray.length} insights with ${totalAnomaliesCount} total anomalies and impact of ${totalImpactValue}`);
+          }
+          else if (result.data && Array.isArray(result.data)) {
             // Format: { data: [...insights], message: '...' }
             insightsArray = result.data;
             totalAnomaliesCount = insightsArray.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
           } 
-          else if (result.insights && Array.isArray(result.insights)) {
-            // Format: { total_anomalies: X, total_impact: Y, insights: [...] }
-            console.log('Processing structured format with insights array:', result.total_anomalies, 'anomalies');
-            insightsArray = result.insights;
-            totalAnomaliesCount = result.total_anomalies || insightsArray.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
-            totalImpactValue = result.total_impact || 0;
-          }
           else if (result.anomaly_count !== undefined || result.bucket_id !== undefined) {
             // Single insight object
             insightsArray = [result];
@@ -168,11 +154,10 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
         setTotalAnomalies(totalAnomaliesCount);
         setTotalImpact(totalImpactValue);
         
-        // If no insights data is returned, fallback to mock data
+        // If no insights data is returned, show error message
         if (!insightsArray || insightsArray.length === 0) {
-          console.warn('No insights data returned from API, using fallback data');
-          fallbackToMockInsights();
-          return;
+          console.warn('No insights data returned from API');
+          throw new Error('No insights data returned from API');
         }
         
         // If onAnomalyInsightsReceived is provided, convert the insights data to AnomalyItem format
@@ -181,17 +166,17 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
             return {
               id: index + 1,
               title: insight.bucket_description,
-              description: `Bucket ${insight.bucket_id}: ${insight.root_cause}`,
+              description: `Bucket ${insight.bucket_id}: ${insight.root_cause || 'No root cause specified'}`,
               severity: getSeverityByBucketId(insight.bucket_id),
               category: getCategoryByBucketId(insight.bucket_id),
               date: new Date().toISOString().split('T')[0],
               impact: totalImpactValue ? `$${Math.abs(totalImpactValue).toLocaleString()}` : `$${(Math.random() * 10000 + 500).toFixed(2)}`,
               status: Math.random() > 0.8 ? 'resolved' : 'unresolved',
               bucket: `Bucket ${insight.bucket_id}: ${insight.bucket_description}`,
-              anomalyCount: insight.anomaly_count,
-              rootCauses: [insight.root_cause],
-              suggestedActions: [insight.recommendation],
-              sampleRecords: generateSampleRecordsFromCompanies(insight.sample_companies)
+              anomalyCount: insight.anomaly_count || 1,
+              rootCauses: [insight.root_cause || 'No root cause specified'],
+              suggestedActions: [insight.recommendation || 'No recommendations available'],
+              sampleRecords: generateSampleRecordsFromCompanies(insight.sample_companies || [])
             };
           });
           
@@ -210,15 +195,14 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       
       // Check for specific error types and display appropriate messages
       if (error.name === 'AbortError') {
-        toast.error('Insights generation timed out after 5 minutes. Using fallback data.');
+        toast.error('Insights generation timed out after 5 minutes.');
       } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        toast.error('Network error: Cannot connect to the server. Using fallback data.');
+        toast.error('Network error: Cannot connect to the server.');
       } else {
         toast.error(`Failed to generate insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
       
-      // Fallback to mock data in case of any error
-      fallbackToMockInsights();
+      // No fallback to mock data as per user request
     } finally {
       setIsGeneratingInsights(false);
     }
