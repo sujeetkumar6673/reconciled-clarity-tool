@@ -20,6 +20,9 @@ interface FileUploadProps {
   onDataProcessed?: (currentData: DynamicColumnData[], historicalData: DynamicColumnData[], headers: string[]) => void;
 }
 
+// API base URL configuration
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
 const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
   const [currentFiles, setCurrentFiles] = useState<File[]>([]);
   const [historicalFiles, setHistoricalFiles] = useState<File[]>([]);
@@ -109,7 +112,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
       // Call APIs to process the data
       if (currentData.length > 0) {
         try {
-          const realtimeResponse = await fetch('/upload/realtime', {
+          const realtimeResponse = await fetch(`${API_BASE_URL}/upload/realtime`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -130,7 +133,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
 
       if (historicalData.length > 0) {
         try {
-          const historicalResponse = await fetch('/upload/historical', {
+          const historicalResponse = await fetch(`${API_BASE_URL}/upload/historical`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
