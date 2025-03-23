@@ -5,19 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
+import AnomalySummaryCards from './anomaly/AnomalySummaryCards';
+import AnomalyTrendChart from './anomaly/AnomalyTrendChart';
+import AnomalyList from './anomaly/AnomalyList';
+import { AnomalyItem } from './anomaly/AnomalyCard';
 
 // Mock data for anomalies
-const anomalyData = [
+const anomalyData: AnomalyItem[] = [
   { 
     id: 1, 
     title: 'Balance Discrepancy', 
@@ -121,62 +115,10 @@ const AnomalySection = () => {
     }
   };
 
-  // Function to render anomaly cards
-  const renderAnomalyCards = () => {
-    if (filteredAnomalies.length > 0) {
-      return filteredAnomalies.map(anomaly => (
-        <div 
-          key={anomaly.id}
-          className="p-4 rounded-lg border bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow"
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="font-medium flex items-center">
-                {getCategoryIcon(anomaly.category)}
-                <span className="ml-2">{anomaly.title}</span>
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {anomaly.description}
-              </p>
-            </div>
-            <Badge 
-              className={cn(
-                "ml-2",
-                getSeverityColor(anomaly.severity)
-              )}
-            >
-              {anomaly.severity} priority
-            </Badge>
-          </div>
-          <div className="mt-3 pt-3 border-t flex items-center justify-between text-sm">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center">
-                <Calendar className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                {anomaly.date}
-              </span>
-              <span className="flex items-center">
-                <DollarSign className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                {anomaly.impact}
-              </span>
-            </div>
-            <Badge variant={anomaly.status === 'resolved' ? 'outline' : 'destructive'}>
-              {anomaly.status}
-            </Badge>
-          </div>
-        </div>
-      ));
-    } else {
-      return (
-        <div className="text-center py-12">
-          <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No anomalies found</h3>
-          <p className="text-muted-foreground">
-            Try changing your filters to see more results
-          </p>
-        </div>
-      );
-    }
-  };
+  // Calculate summary data
+  const resolvedCount = anomalyData.filter(a => a.status === 'resolved').length;
+  const totalImpact = '$4,447.30';
+  const resolutionRate = '20%';
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
@@ -189,102 +131,16 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Summary cards */}
-        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-fade-in">
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-red-500" />
-                Total Anomalies
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{anomalyData.length}</div>
-              <p className="text-sm text-muted-foreground">Across all accounts</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <DollarSign className="h-5 w-5 mr-2 text-blue-500" />
-                Total Impact
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                $4,447.30
-              </div>
-              <p className="text-sm text-muted-foreground">Combined financial impact</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="glass-card">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-green-500" />
-                Resolution Rate
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">20%</div>
-              <p className="text-sm text-muted-foreground">1 of 5 anomalies resolved</p>
-            </CardContent>
-          </Card>
-        </div>
+        <AnomalySummaryCards 
+          totalAnomalies={anomalyData.length}
+          totalImpact={totalImpact}
+          resolutionRate={resolutionRate}
+          resolvedCount={resolvedCount}
+          totalCount={anomalyData.length}
+        />
 
         {/* Left column - Anomaly Chart */}
-        <div className="lg:col-span-1 animate-fade-in animate-delay-100">
-          <Card className="glass-card h-full">
-            <CardHeader>
-              <CardTitle>Anomaly Trend</CardTitle>
-              <CardDescription>
-                Daily anomaly count and financial impact
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={chartData}
-                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="colorAnomalies" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                      </linearGradient>
-                      <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                    <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 12 }} />
-                    <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                    <Tooltip />
-                    <Area
-                      yAxisId="left"
-                      type="monotone"
-                      dataKey="anomalies"
-                      stroke="#3B82F6"
-                      fillOpacity={1}
-                      fill="url(#colorAnomalies)"
-                    />
-                    <Area
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="amount"
-                      stroke="#10B981"
-                      fillOpacity={1}
-                      fill="url(#colorAmount)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <AnomalyTrendChart chartData={chartData} />
 
         {/* Right column - Anomaly List */}
         <div className="lg:col-span-2 animate-fade-in animate-delay-200">
@@ -328,19 +184,35 @@ const AnomalySection = () => {
                 </div>
                 
                 <TabsContent value="all" className="space-y-4 mt-0">
-                  {renderAnomalyCards()}
+                  <AnomalyList 
+                    filteredAnomalies={filteredAnomalies}
+                    getCategoryIcon={getCategoryIcon}
+                    getSeverityColor={getSeverityColor}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="high" className="space-y-4 mt-0">
-                  {renderAnomalyCards()}
+                  <AnomalyList 
+                    filteredAnomalies={filteredAnomalies}
+                    getCategoryIcon={getCategoryIcon}
+                    getSeverityColor={getSeverityColor}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="unresolved" className="space-y-4 mt-0">
-                  {renderAnomalyCards()}
+                  <AnomalyList 
+                    filteredAnomalies={filteredAnomalies}
+                    getCategoryIcon={getCategoryIcon}
+                    getSeverityColor={getSeverityColor}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="resolved" className="space-y-4 mt-0">
-                  {renderAnomalyCards()}
+                  <AnomalyList 
+                    filteredAnomalies={filteredAnomalies}
+                    getCategoryIcon={getCategoryIcon}
+                    getSeverityColor={getSeverityColor}
+                  />
                 </TabsContent>
               </Tabs>
             </CardHeader>

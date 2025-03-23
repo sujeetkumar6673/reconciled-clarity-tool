@@ -1,0 +1,43 @@
+
+import React from 'react';
+import { AlertTriangle } from 'lucide-react';
+import AnomalyCard, { AnomalyItem } from './AnomalyCard';
+
+interface AnomalyListProps {
+  filteredAnomalies: AnomalyItem[];
+  getCategoryIcon: (category: string) => JSX.Element;
+  getSeverityColor: (severity: string) => string;
+}
+
+const AnomalyList: React.FC<AnomalyListProps> = ({ 
+  filteredAnomalies, 
+  getCategoryIcon, 
+  getSeverityColor 
+}) => {
+  if (filteredAnomalies.length > 0) {
+    return (
+      <div className="space-y-4">
+        {filteredAnomalies.map(anomaly => (
+          <AnomalyCard 
+            key={anomaly.id}
+            anomaly={anomaly}
+            getCategoryIcon={getCategoryIcon}
+            getSeverityColor={getSeverityColor}
+          />
+        ))}
+      </div>
+    );
+  } 
+  
+  return (
+    <div className="text-center py-12">
+      <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+      <h3 className="text-lg font-medium">No anomalies found</h3>
+      <p className="text-muted-foreground">
+        Try changing your filters to see more results
+      </p>
+    </div>
+  );
+};
+
+export default AnomalyList;

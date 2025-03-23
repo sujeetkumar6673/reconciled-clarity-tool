@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpDown, MoreHorizontal, FileSearch, Download } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, FileSearch, Download } from 'lucide-react';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import {
   Table,
@@ -12,9 +12,9 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import TableFilters from './table/TableFilters';
+import TablePagination from './table/TablePagination';
+import { TableCellFormatter } from './table/TableCellFormatter';
 
 interface DynamicTableProps {
   data: DynamicColumnData[];
@@ -132,70 +132,11 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
   );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Reconciled':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 'Pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      case 'Unmatched':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
-    }
-  };
   
-  const getDataTypeColor = (dataType: string) => {
-    switch (dataType) {
-      case 'current':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-      case 'historical':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400';
-    }
-  };
-
-  // Format cell value based on content type
-  const formatCellValue = (value: any, columnName: string) => {
-    if (value === undefined || value === null) {
-      return '';
-    }
-    
-    if (columnName === 'status' && typeof value === 'string') {
-      return (
-        <span className={cn(
-          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-          getStatusColor(value)
-        )}>
-          {value}
-        </span>
-      );
-    }
-    
-    if (columnName === 'dataType' && typeof value === 'string') {
-      return (
-        <span className={cn(
-          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-          getDataTypeColor(value)
-        )}>
-          {value === 'current' ? 'Current' : 'Historical'}
-        </span>
-      );
-    }
-    
-    if (columnName === 'source' && typeof value === 'string') {
-      return <span className="text-xs text-gray-500">{value.split('/').pop()}</span>;
-    }
-    
-    if (typeof value === 'number') {
-      return columnName.toLowerCase().includes('amount') 
-        ? `$${Math.abs(value).toFixed(2)}`
-        : value.toString();
-    }
-    
-    return value.toString();
+  const resetFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setDataTypeFilter('all');
   };
 
   return (
@@ -208,51 +149,15 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-1">
-          <Input
-            placeholder="Search transactions..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
-        </div>
-        <div className="w-full md:w-48">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="Reconciled">Reconciled</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Unmatched">Unmatched</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="w-full md:w-48">
-          <Select value={dataTypeFilter} onValueChange={setDataTypeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by data type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Data Types</SelectItem>
-              <SelectItem value="current">Current Data</SelectItem>
-              <SelectItem value="historical">Historical Data</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button
-          variant="outline"
-          onClick={() => {
-            setSearchTerm('');
-            setStatusFilter('all');
-            setDataTypeFilter('all');
-          }}
-        >
-          Reset Filters
-        </Button>
-      </div>
+      <TableFilters 
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        dataTypeFilter={dataTypeFilter}
+        setDataTypeFilter={setDataTypeFilter}
+        resetFilters={resetFilters}
+      />
 
       <div className="rounded-md border overflow-x-auto">
         <Table>
@@ -278,7 +183,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
                     key={`${item.id}-${column}`} 
                     className={column === 'amount' ? 'text-right' : (column === 'source' ? 'text-center' : '')}
                   >
-                    {formatCellValue(item[column], column)}
+                    <TableCellFormatter value={item[column]} columnName={column} />
                   </TableCell>
                 ))}
                 <TableCell className="text-right">
@@ -314,61 +219,13 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
       </div>
 
       {/* Pagination */}
-      {filteredData.length > 0 && (
-        <div className="flex items-center justify-between mt-4">
-          <div>
-            <p className="text-sm text-gray-700 dark:text-gray-400">
-              Showing <span className="font-medium">{Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)}</span> to{' '}
-              <span className="font-medium">
-                {Math.min(currentPage * itemsPerPage, filteredData.length)}
-              </span>{' '}
-              of <span className="font-medium">{filteredData.length}</span> results
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            {Array.from({ length: Math.min(totalPages, 5) }).map((_, index) => {
-              let pageNumber: number;
-              // Logic to show pages around the current page
-              if (totalPages <= 5) {
-                pageNumber = index + 1;
-              } else if (currentPage <= 3) {
-                pageNumber = index + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNumber = totalPages - 4 + index;
-              } else {
-                pageNumber = currentPage - 2 + index;
-              }
-              
-              return (
-                <Button
-                  key={index}
-                  variant={currentPage === pageNumber ? "default" : "outline"}
-                  onClick={() => setCurrentPage(pageNumber)}
-                  className="hidden md:inline-block"
-                >
-                  {pageNumber}
-                </Button>
-              );
-            })}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <TablePagination 
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        filteredDataLength={filteredData.length}
+        itemsPerPage={itemsPerPage}
+      />
     </div>
   );
 };
