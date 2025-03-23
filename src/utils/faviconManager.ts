@@ -1,70 +1,96 @@
 
 /**
- * Helper function to dynamically set and refresh the favicon
- * This can help overcome browser caching issues with favicons
+ * Super aggressive favicon manager to override any existing favicon
  */
 export const refreshFavicon = (): void => {
   try {
-    console.log('Starting favicon removal and replacement process');
+    console.log('Starting ultra-aggressive favicon override process');
     
-    // Remove all existing favicon links - try multiple strategies
-    document.querySelectorAll('link[rel*="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[href*="favicon"], link[href*="icon"]')
-      .forEach(link => {
-        try {
-          document.head.removeChild(link);
-          console.log('Removed favicon link:', link);
-        } catch (e) {
-          console.log('Failed to remove link:', e);
-        }
-      });
-    
-    // Force removal of any potential cached versions
+    // Step 1: Remove ALL link elements in the document head, not just favicon ones
+    const head = document.head;
     const allLinks = document.querySelectorAll('link');
+    
     allLinks.forEach(link => {
-      if (link.href && (link.href.includes('favicon') || link.href.includes('icon'))) {
-        try {
-          document.head.removeChild(link);
-          console.log('Removed additional icon link:', link.href);
-        } catch (e) {
-          console.log('Failed to remove link:', e);
+      try {
+        if (link.rel.includes('icon') || link.href.includes('icon') || link.href.includes('favicon')) {
+          head.removeChild(link);
+          console.log('Removed favicon/icon link:', link.href || 'inline icon');
         }
+      } catch (e) {
+        console.log('Failed to remove link:', e);
       }
     });
     
-    // Generate a completely unique cache-busting timestamp
-    const uniqueId = `${new Date().getTime()}-${Math.random().toString(36).substring(2, 15)}`;
-    console.log('Generated unique ID for favicon:', uniqueId);
+    // Step 2: Try to specifically target the lovable icon if it exists
+    try {
+      const lovableLinks = document.querySelectorAll('link[href*="lovable"]');
+      lovableLinks.forEach(link => head.removeChild(link));
+      console.log('Attempted to remove any lovable icon links');
+    } catch (e) {
+      console.log('No lovable links found or failed to remove');
+    }
     
-    // Create a new base64 transparent 16x16 PNG favicon directly in code
-    // This creates a transparent placeholder that won't show any icon
-    const transparentFaviconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAH0lEQVR42mNkwAEYj8Kh/0P/M+JTx4RXDaMKRhWAAQC5xg1+G/U+EwAAAABJRU5ErkJggg==';
+    // Step 3: Generate a timestamp for cache busting
+    const timestamp = Date.now() + '-' + Math.random().toString(36).substring(2, 10);
     
-    // Create and append an inline SVG favicon - even more guaranteed to override existing ones
-    const inlineFavicon = document.createElement('link');
-    inlineFavicon.rel = 'icon';
-    inlineFavicon.type = 'image/png';
-    inlineFavicon.href = `data:image/png;base64,${transparentFaviconBase64}`;
-    document.head.appendChild(inlineFavicon);
-    console.log('Added inline transparent favicon');
+    // Step 4: Create and add your own favicon with cache busting
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/x-icon';
+    favicon.href = `/favicon.ico?v=${timestamp}`;
+    head.appendChild(favicon);
     
-    // Also try with the local file as a backup with unique ID
-    const localFavicon = document.createElement('link');
-    localFavicon.rel = 'icon';
-    localFavicon.type = 'image/x-icon';
-    localFavicon.href = `/favicon.ico?v=${uniqueId}`;
-    document.head.appendChild(localFavicon);
-    console.log('Added local favicon with unique ID');
+    // Step 5: Add a shortcut icon as well
+    const shortcutIcon = document.createElement('link');
+    shortcutIcon.rel = 'shortcut icon';
+    shortcutIcon.type = 'image/x-icon';
+    shortcutIcon.href = `/favicon.ico?v=${timestamp}`;
+    head.appendChild(shortcutIcon);
     
-    // Add multiple other formats with the highest precedence
-    ['shortcut icon', 'apple-touch-icon'].forEach(relType => {
-      const additionalIcon = document.createElement('link');
-      additionalIcon.rel = relType;
-      additionalIcon.href = `data:image/png;base64,${transparentFaviconBase64}`;
-      document.head.appendChild(additionalIcon);
-    });
+    // Step 6: Also add an apple touch icon
+    const appleIcon = document.createElement('link');
+    appleIcon.rel = 'apple-touch-icon';
+    appleIcon.href = `/favicon.ico?v=${timestamp}`;
+    head.appendChild(appleIcon);
     
-    console.log('Favicon refresh complete with unique ID:', uniqueId);
+    // Step 7: Add a fallback transparent icon
+    const transparentIcon = document.createElement('link');
+    transparentIcon.rel = 'icon';
+    transparentIcon.href = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    head.appendChild(transparentIcon);
+    
+    console.log('Added new favicons with cache busting timestamp:', timestamp);
+    
+    // Step 8: Try to modify page title to force browser tab update
+    const originalTitle = document.title;
+    document.title = originalTitle + ' ';
+    setTimeout(() => { document.title = originalTitle; }, 10);
+    
+    console.log('Favicon refresh complete with extreme measures');
   } catch (error) {
     console.error('Error in refreshFavicon:', error);
   }
+};
+
+// Additional function to continuously fight against lovable icon
+export const startAggressiveFaviconMonitoring = (): void => {
+  // Run every 500ms for 30 seconds
+  const interval = setInterval(() => {
+    try {
+      const lovableLinks = document.querySelectorAll('link[href*="lovable"], link[href*="heart"]');
+      if (lovableLinks.length > 0) {
+        console.log('Found and removing lovable links:', lovableLinks.length);
+        lovableLinks.forEach(link => document.head.removeChild(link));
+        refreshFavicon();
+      }
+    } catch (e) {
+      console.log('Error in monitoring:', e);
+    }
+  }, 500);
+  
+  // Stop after 30 seconds
+  setTimeout(() => {
+    clearInterval(interval);
+    console.log('Stopped aggressive favicon monitoring');
+  }, 30000);
 };
