@@ -49,40 +49,75 @@ export const parseCsvForTable = (
 ) => {
   if (!onAnomalyDataReceived) return false;
   
+  // Split by new lines and filter out empty lines
   const lines = csvData.split('\n').filter(line => line.trim() !== '');
   if (lines.length === 0) return false;
   
-  // Extract and clean headers 
-  const rawHeaders = lines[0].split(',').map(header => header.trim());
+  // Extract and clean headers - first handle quoted headers properly
+  let rawHeaderLine = lines[0];
+  let processedHeaders: string[] = [];
   
-  // Filter out empty headers
-  const headers = rawHeaders.filter(header => header && header.trim() !== '');
+  // Check if headers contain quotes and commas
+  if (rawHeaderLine.includes('"') && rawHeaderLine.includes(',')) {
+    let inQuotes = false;
+    let currentHeader = "";
+    
+    for (let i = 0; i < rawHeaderLine.length; i++) {
+      const char = rawHeaderLine[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        processedHeaders.push(currentHeader.trim());
+        currentHeader = "";
+      } else {
+        currentHeader += char;
+      }
+    }
+    
+    // Add the last header
+    processedHeaders.push(currentHeader.trim());
+  } else {
+    // Simple split for non-quoted headers
+    processedHeaders = rawHeaderLine.split(',').map(h => h.trim());
+  }
   
-  console.log(`CSV parsing: Found ${headers.length} non-empty headers out of ${rawHeaders.length} total`);
+  // Remove any empty or duplicate headers
+  const uniqueHeaders = processedHeaders.filter((header, index, self) => {
+    // Filter out empty headers or headers that appear earlier in the array
+    return header && header.trim() !== '' && 
+           self.findIndex(h => h.toLowerCase() === header.toLowerCase()) === index;
+  });
+  
+  console.log(`CSV parsing: Found ${uniqueHeaders.length} unique headers out of ${processedHeaders.length} total`);
   
   const parsedData: any[] = [];
   
+  // Process data rows (starting from line 1)
   for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue;
+    const line = lines[i].trim();
+    if (!line) continue;
     
     // Handle quoted fields with commas inside them
     const values: string[] = [];
     let currentValue = '';
     let inQuotes = false;
     
-    for (let j = 0; j < lines[i].length; j++) {
-      const char = lines[i][j];
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
       
       if (char === '"') {
         inQuotes = !inQuotes;
       } else if (char === ',' && !inQuotes) {
-        values.push(currentValue);
+        values.push(currentValue.trim());
         currentValue = '';
       } else {
         currentValue += char;
       }
     }
-    values.push(currentValue); // Add the last value
+    
+    // Add the last value
+    values.push(currentValue.trim());
     
     // Create object with proper column mapping and unique ID
     const row: any = {
@@ -92,8 +127,8 @@ export const parseCsvForTable = (
       dataType: 'anomaly'
     };
     
-    // Map only valid fields based on clean header names
-    headers.forEach((header, index) => {
+    // Map only valid fields based on unique header names
+    uniqueHeaders.forEach((header, index) => {
       if (index < values.length && header) {
         const value = values[index]?.trim() || '';
         
@@ -106,7 +141,7 @@ export const parseCsvForTable = (
       }
     });
     
-    // Only include rows that have some data besides the default properties
+    // Only include rows that have some actual data
     const hasCustomData = Object.keys(row).some(key => 
       !['id', 'source', 'status', 'dataType'].includes(key) && 
       row[key] !== undefined && 
@@ -119,10 +154,11 @@ export const parseCsvForTable = (
     }
   }
   
-  console.log(`CSV parsing: Processed ${parsedData.length} data rows with ${headers.length} columns`);
+  console.log(`CSV parsing: Processed ${parsedData.length} data rows with ${uniqueHeaders.length} columns`);
   
   if (parsedData.length > 0) {
-    onAnomalyDataReceived(parsedData, headers);
+    // Call the callback with properly filtered headers
+    onAnomalyDataReceived(parsedData, uniqueHeaders);
     return true;
   }
   

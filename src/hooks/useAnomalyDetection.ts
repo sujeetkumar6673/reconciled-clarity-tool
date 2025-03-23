@@ -50,30 +50,6 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
-  // Improved and simplified deduplication function to handle various cases
-  const deduplicateHeaders = (headers: string[]): string[] => {
-    if (!headers || headers.length === 0) return [];
-    
-    // Filter out empty headers first
-    const nonEmptyHeaders = headers.filter(h => h && h.trim() !== '');
-    
-    // Create a map to track unique normalized headers
-    const seen = new Map<string, boolean>();
-    const result: string[] = [];
-    
-    for (const header of nonEmptyHeaders) {
-      // Create a normalized version for comparison (lowercase, no spaces or special chars)
-      const normalized = header.toLowerCase().replace(/[^a-z0-9]/g, '');
-      
-      if (normalized && !seen.has(normalized)) {
-        seen.set(normalized, true);
-        result.push(header);
-      }
-    }
-    
-    return result;
-  };
-
   const detectAnomalies = async () => {
     setIsDetecting(true);
     setProgress(5); // Start with 5% progress
@@ -81,9 +57,9 @@ export const useAnomalyDetection = ({
     try {
       toast.info('Starting anomaly detection process with AI insights...');
       
-      // Increased timeout for anomaly detection - 90 seconds
+      // Increased timeout for anomaly detection - 180 seconds (3 minutes)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 90000);
+      const timeoutId = setTimeout(() => controller.abort(), 180000);
       
       const response = await fetch(`${API_BASE_URL}/test`, {
         method: 'GET',
@@ -114,9 +90,7 @@ export const useAnomalyDetection = ({
         const hasData = parseCsvForTable(csvData, 
           (data, headers) => {
             if (onAnomalyDataReceived) {
-              // Apply improved deduplication to headers
-              const deduplicatedHeaders = deduplicateHeaders(headers);
-              console.log('Processing anomaly data with headers:', deduplicatedHeaders.length);
+              console.log('Processing anomaly data with headers:', headers);
               
               // Filter out any rows with all empty values
               const filteredData = data.filter(row => 
@@ -125,7 +99,7 @@ export const useAnomalyDetection = ({
                 )
               );
               
-              onAnomalyDataReceived(filteredData, deduplicatedHeaders);
+              onAnomalyDataReceived(filteredData, headers);
             }
           }, 
           onAnomalyInsightsReceived
@@ -144,9 +118,7 @@ export const useAnomalyDetection = ({
         const hasData = parseCsvForTable(mockCsvData, 
           (data, headers) => {
             if (onAnomalyDataReceived) {
-              // Apply improved deduplication to headers
-              const deduplicatedHeaders = deduplicateHeaders(headers);
-              console.log('Using mock data with headers:', deduplicatedHeaders.length);
+              console.log('Using mock data with headers:', headers);
               
               // Filter out any rows with all empty values
               const filteredData = data.filter(row => 
@@ -155,7 +127,7 @@ export const useAnomalyDetection = ({
                 )
               );
               
-              onAnomalyDataReceived(filteredData, deduplicatedHeaders);
+              onAnomalyDataReceived(filteredData, headers);
             }
           }, 
           onAnomalyInsightsReceived
@@ -176,9 +148,7 @@ export const useAnomalyDetection = ({
       const hasData = parseCsvForTable(mockCsvData, 
         (data, headers) => {
           if (onAnomalyDataReceived) {
-            // Apply improved deduplication to headers
-            const deduplicatedHeaders = deduplicateHeaders(headers);
-            console.log('Using fallback data with headers:', deduplicatedHeaders.length);
+            console.log('Using fallback data with headers:', headers);
             
             // Filter out any rows with all empty values
             const filteredData = data.filter(row => 
@@ -187,7 +157,7 @@ export const useAnomalyDetection = ({
               )
             );
             
-            onAnomalyDataReceived(filteredData, deduplicatedHeaders);
+            onAnomalyDataReceived(filteredData, headers);
           }
         }, 
         onAnomalyInsightsReceived

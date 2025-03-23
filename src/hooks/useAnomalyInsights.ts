@@ -53,9 +53,9 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
     try {
       toast.info('Generating detailed AI insights...');
       
-      // Increase timeout to prevent hanging requests - 120 seconds (2 minutes)
+      // Increase timeout to prevent hanging requests - 240 seconds (4 minutes)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout (increased from 60)
+      const timeoutId = setTimeout(() => controller.abort(), 240000); // 4 minute timeout (increased from 2 minutes)
       
       // Call the real API endpoint with error handling
       console.log('Fetching insights from API:', `${API_BASE_URL}/insights`);
@@ -102,27 +102,34 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       let totalAnomaliesCount = 0;
       let totalImpactValue = 0;
       
-      // Check if result has the expected structure
-      if (result.total_anomalies !== undefined && result.insights && Array.isArray(result.insights)) {
-        // This is the new expected format with total_anomalies, total_impact, and insights array
-        console.log('Processing structured format with insights array:', result.total_anomalies, 'anomalies');
-        insightsArray = result.insights;
-        totalAnomaliesCount = result.total_anomalies;
-        totalImpactValue = result.total_impact || 0;
-      } else if (Array.isArray(result)) {
-        // Old format - direct array of insights
-        console.log('Processing direct array format');
+      // Check if result has the expected structure - properly handle all possible formats
+      if (typeof result === 'object' && !Array.isArray(result)) {
+        // Handle object format
+        console.log('Processing object response format');
+        
+        if (result.data && Array.isArray(result.data)) {
+          // Format: { data: [...insights], message: '...' }
+          insightsArray = result.data;
+          totalAnomaliesCount = insightsArray.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
+        } 
+        else if (result.insights && Array.isArray(result.insights)) {
+          // Format: { total_anomalies: X, total_impact: Y, insights: [...] }
+          console.log('Processing structured format with insights array:', result.total_anomalies, 'anomalies');
+          insightsArray = result.insights;
+          totalAnomaliesCount = result.total_anomalies || insightsArray.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
+          totalImpactValue = result.total_impact || 0;
+        }
+        else if (result.anomaly_count !== undefined || result.bucket_id !== undefined) {
+          // Single insight object
+          insightsArray = [result];
+          totalAnomaliesCount = result.anomaly_count || 0;
+        }
+      } 
+      else if (Array.isArray(result)) {
+        // Direct array of insights
+        console.log('Processing direct array format with', result.length, 'insights');
         insightsArray = result;
         totalAnomaliesCount = result.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
-      } else if (result.message) {
-        // Handle case where only a message is returned
-        console.log('Response contains only a message:', result.message);
-        toast.info(result.message);
-        throw new Error('No insights data available in the response');
-      } else {
-        // Unknown format - log it for debugging
-        console.warn('Unexpected insights data format:', result);
-        throw new Error('Invalid insights data format received');
       }
       
       console.log(`Processing ${insightsArray.length} insights with total ${totalAnomaliesCount} anomalies`);
@@ -168,7 +175,7 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       
       // Check for specific error types and display appropriate messages
       if (error.name === 'AbortError') {
-        toast.error('Insights generation timed out. Using fallback data.');
+        toast.error('Insights generation timed out after 4 minutes. Using fallback data.');
       } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
         toast.error('Network error: Cannot connect to the server. Using fallback data.');
       } else {

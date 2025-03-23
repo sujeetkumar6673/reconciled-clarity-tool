@@ -1,10 +1,10 @@
 
-export const mockCsvData = `Company,Account,PrimaryAccount,SecondaryAccount,GLBalance,iHubBalance,AnomalyScore,BalanceDifference
-Doyle Ltd,740,COMMERCIAL LOANS,INTEREST RECEIVABLE,83000,83000,-0.0121,0
-Galloway-Wyatt,493,ALL LOB LOANS,PRINCIPAL,22000,22000,-0.0216,0
-Abbott-Munoz,327,RETAIL LOANS,DEFERRED COSTS,88000,105000,-0.0275,-17000
-Mcclain Miller Henderson,298,RETAIL LOANS,INTEREST RECEIVABLE,32000,23000,-0.0190,9000
-Guzman Hoffman Baldwin,365,COMMERCIAL LOANS,DEFERRED COSTS,82000,93000,-0.0730,-11000`;
+export const mockCsvData = `Company,Account,AU,PrimaryAccount,SecondaryAccount,GLBalance,iHubBalance,BalanceDifference,Comments
+Doyle Ltd,740,4457,COMMERCIAL LOANS,INTEREST RECEIVABLE,83000,83000,0,Inconsistent variations
+Galloway-Wyatt,493,9115,ALL LOB LOANS,PRINCIPAL,22000,22000,0,Inconsistent variations
+Abbott-Munoz,327,3108,RETAIL LOANS,DEFERRED COSTS,88000,105000,-17000,Inconsistent variations
+Mcclain Miller Henderson,298,7026,RETAIL LOANS,INTEREST RECEIVABLE,32000,23000,9000,Inconsistent variations
+Guzman Hoffman Baldwin,365,3735,COMMERCIAL LOANS,DEFERRED COSTS,82000,93000,-11000,Inconsistent variations`;
 
 export const mockInsightsData = [
   {
