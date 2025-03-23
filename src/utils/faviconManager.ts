@@ -5,42 +5,66 @@
  */
 export const refreshFavicon = (): void => {
   try {
-    // First attempt: Remove ALL existing favicons
-    const existingFavicons = document.querySelectorAll('link[rel*="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]');
-    console.log(`Found ${existingFavicons.length} existing favicons to remove`);
+    console.log('Starting favicon removal and replacement process');
     
-    existingFavicons.forEach(favicon => {
-      document.head.removeChild(favicon);
-      console.log('Removed favicon:', favicon);
+    // Remove all existing favicon links - try multiple strategies
+    document.querySelectorAll('link[rel*="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"], link[href*="favicon"], link[href*="icon"]')
+      .forEach(link => {
+        try {
+          document.head.removeChild(link);
+          console.log('Removed favicon link:', link);
+        } catch (e) {
+          console.log('Failed to remove link:', e);
+        }
+      });
+    
+    // Force removal of any potential cached versions
+    const allLinks = document.querySelectorAll('link');
+    allLinks.forEach(link => {
+      if (link.href && (link.href.includes('favicon') || link.href.includes('icon'))) {
+        try {
+          document.head.removeChild(link);
+          console.log('Removed additional icon link:', link.href);
+        } catch (e) {
+          console.log('Failed to remove link:', e);
+        }
+      }
     });
-
-    // Second attempt: Remove any favicons with specific attributes that might be causing issues
-    const potentialFavicons = document.querySelectorAll('link[href*="favicon"], link[href*="icon"]');
-    potentialFavicons.forEach(favicon => {
-      if (!favicon.parentNode) return; // Skip if already removed
-      document.head.removeChild(favicon);
-      console.log('Removed additional favicon:', favicon);
+    
+    // Generate a completely unique cache-busting timestamp
+    const uniqueId = `${new Date().getTime()}-${Math.random().toString(36).substring(2, 15)}`;
+    console.log('Generated unique ID for favicon:', uniqueId);
+    
+    // Create a new base64 transparent 16x16 PNG favicon directly in code
+    // This creates a transparent placeholder that won't show any icon
+    const transparentFaviconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAH0lEQVR42mNkwAEYj8Kh/0P/M+JTx4RXDaMKRhWAAQC5xg1+G/U+EwAAAABJRU5ErkJggg==';
+    
+    // Create and append an inline SVG favicon - even more guaranteed to override existing ones
+    const inlineFavicon = document.createElement('link');
+    inlineFavicon.rel = 'icon';
+    inlineFavicon.type = 'image/png';
+    inlineFavicon.href = `data:image/png;base64,${transparentFaviconBase64}`;
+    document.head.appendChild(inlineFavicon);
+    console.log('Added inline transparent favicon');
+    
+    // Also try with the local file as a backup with unique ID
+    const localFavicon = document.createElement('link');
+    localFavicon.rel = 'icon';
+    localFavicon.type = 'image/x-icon';
+    localFavicon.href = `/favicon.ico?v=${uniqueId}`;
+    document.head.appendChild(localFavicon);
+    console.log('Added local favicon with unique ID');
+    
+    // Add multiple other formats with the highest precedence
+    ['shortcut icon', 'apple-touch-icon'].forEach(relType => {
+      const additionalIcon = document.createElement('link');
+      additionalIcon.rel = relType;
+      additionalIcon.href = `data:image/png;base64,${transparentFaviconBase64}`;
+      document.head.appendChild(additionalIcon);
     });
-
-    // Create and append a completely new favicon with a unique cache-busting parameter
-    const timestamp = new Date().getTime();
     
-    // Add primary favicon with aggressive cache busting
-    const newFavicon = document.createElement('link');
-    newFavicon.rel = 'icon';
-    newFavicon.type = 'image/x-icon';
-    newFavicon.href = `/favicon.ico?v=${timestamp}`;
-    document.head.appendChild(newFavicon);
-    
-    // Add shortcut icon for maximum browser compatibility
-    const shortcutIcon = document.createElement('link');
-    shortcutIcon.rel = 'shortcut icon';
-    shortcutIcon.type = 'image/x-icon';
-    shortcutIcon.href = `/favicon.ico?v=${timestamp}`;
-    document.head.appendChild(shortcutIcon);
-    
-    console.log('Favicon has been completely refreshed with timestamp:', timestamp);
+    console.log('Favicon refresh complete with unique ID:', uniqueId);
   } catch (error) {
-    console.error('Error refreshing favicon:', error);
+    console.error('Error in refreshFavicon:', error);
   }
 };
