@@ -12,7 +12,10 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
     return null;
   }
   
-  if (columnName === 'status' && typeof value === 'string') {
+  // Normalize column name to check against various formats
+  const normalizedColumnName = columnName.toLowerCase().replace(/\s+/g, '');
+  
+  if (normalizedColumnName === 'status' && typeof value === 'string') {
     return (
       <span className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
@@ -23,7 +26,7 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
     );
   }
   
-  if (columnName === 'dataType' && typeof value === 'string') {
+  if (normalizedColumnName === 'datatype' && typeof value === 'string') {
     return (
       <span className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
@@ -34,15 +37,15 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
     );
   }
   
-  if (columnName === 'source' && typeof value === 'string') {
+  if (normalizedColumnName === 'source' && typeof value === 'string') {
     return <span className="text-xs text-gray-500">{value.split('/').pop()}</span>;
   }
   
   if (typeof value === 'number') {
     // Format numeric values
-    const isAmount = columnName.toLowerCase().includes('amount') || 
-                     columnName.toLowerCase().includes('balance') ||
-                     columnName.toLowerCase().includes('difference');
+    const isAmount = normalizedColumnName.includes('amount') || 
+                     normalizedColumnName.includes('balance') ||
+                     normalizedColumnName.includes('difference');
     
     if (isAmount) {
       // For positive/negative numbers, don't use absolute value

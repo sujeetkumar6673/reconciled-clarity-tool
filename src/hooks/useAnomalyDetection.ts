@@ -50,6 +50,19 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
+  // Helper function to deduplicate headers while preserving the original ones
+  const deduplicateHeaders = (headers: string[]): string[] => {
+    const seen = new Set<string>();
+    return headers.filter(header => {
+      const normalized = header.toLowerCase().replace(/\s+/g, '');
+      if (seen.has(normalized)) {
+        return false;
+      }
+      seen.add(normalized);
+      return true;
+    });
+  };
+
   const detectAnomalies = async () => {
     setIsDetecting(true);
     setProgress(5); // Start with 5% progress
@@ -80,7 +93,16 @@ export const useAnomalyDetection = ({
         setResultFile(url);
         
         // Parse CSV data for the UI table
-        const hasData = parseCsvForTable(csvData, onAnomalyDataReceived, onAnomalyInsightsReceived);
+        const hasData = parseCsvForTable(csvData, 
+          (data, headers) => {
+            if (onAnomalyDataReceived) {
+              const deduplicatedHeaders = deduplicateHeaders(headers);
+              onAnomalyDataReceived(data, deduplicatedHeaders);
+            }
+          }, 
+          onAnomalyInsightsReceived
+        );
+        
         setHasAnomalies(hasData);
         
         toast.success('Anomaly detection completed with AI insights! CSV file is ready for download.');
@@ -91,7 +113,16 @@ export const useAnomalyDetection = ({
         console.log('Anomaly detection result:', result);
         
         // Parse mock CSV data for demo purposes
-        const hasData = parseCsvForTable(mockCsvData, onAnomalyDataReceived, onAnomalyInsightsReceived);
+        const hasData = parseCsvForTable(mockCsvData, 
+          (data, headers) => {
+            if (onAnomalyDataReceived) {
+              const deduplicatedHeaders = deduplicateHeaders(headers);
+              onAnomalyDataReceived(data, deduplicatedHeaders);
+            }
+          }, 
+          onAnomalyInsightsReceived
+        );
+        
         setHasAnomalies(hasData);
       }
     } catch (error) {
@@ -99,7 +130,16 @@ export const useAnomalyDetection = ({
       toast.error(`Anomaly detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
       // For demo purposes - simulate successful detection even on error
-      const hasData = parseCsvForTable(mockCsvData, onAnomalyDataReceived, onAnomalyInsightsReceived);
+      const hasData = parseCsvForTable(mockCsvData, 
+        (data, headers) => {
+          if (onAnomalyDataReceived) {
+            const deduplicatedHeaders = deduplicateHeaders(headers);
+            onAnomalyDataReceived(data, deduplicatedHeaders);
+          }
+        }, 
+        onAnomalyInsightsReceived
+      );
+      
       setHasAnomalies(hasData);
     } finally {
       setIsDetecting(false);
