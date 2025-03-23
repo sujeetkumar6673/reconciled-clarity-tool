@@ -14,10 +14,18 @@ const AnomalyList: React.FC<AnomalyListProps> = ({
   getCategoryIcon, 
   getSeverityColor 
 }) => {
-  // Calculate total anomalies from all categories - robustly handle undefined anomalyCount
+  // Calculate total anomalies from all categories - robustly handle undefined or invalid anomalyCount
   const totalAnomalyCount = filteredAnomalies.reduce(
-    (total, anomaly) => total + (typeof anomaly.anomalyCount === 'number' && !isNaN(anomaly.anomalyCount) 
-                                ? anomaly.anomalyCount : 0), 
+    (total, anomaly) => {
+      // Handle various formats of anomalyCount (number, string, undefined, null)
+      if (typeof anomaly.anomalyCount === 'number' && !isNaN(anomaly.anomalyCount)) {
+        return total + anomaly.anomalyCount;
+      } else if (typeof anomaly.anomalyCount === 'string') {
+        const parsed = parseInt(anomaly.anomalyCount, 10);
+        return !isNaN(parsed) ? total + parsed : total;
+      }
+      return total;
+    }, 
     0
   );
   

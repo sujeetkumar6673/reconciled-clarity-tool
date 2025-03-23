@@ -57,83 +57,107 @@ export const useAnomalyDetection = ({
     try {
       toast.info('Starting anomaly detection process with AI insights...');
       
-      // Increased timeout for anomaly detection - 180 seconds (3 minutes)
+      // Increased timeout for anomaly detection - 300 seconds (5 minutes)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 180000);
+      const timeoutId = setTimeout(() => controller.abort(), 300000);
       
-      const response = await fetch(`${API_BASE_URL}/test`, {
-        method: 'GET',
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      // Set to 100% when we get the response
-      setProgress(100);
-      
-      // Check if the response is a CSV file
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('text/csv')) {
-        // Get the file content as text
-        const csvData = await response.text();
+      try {
+        const response = await fetch(`${API_BASE_URL}/test`, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json, text/csv, */*',
+            'Cache-Control': 'no-cache'
+          }
+        });
         
-        // Create blob and download link
-        const blob = new Blob([csvData], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        setResultFile(url);
+        clearTimeout(timeoutId);
         
-        // Parse CSV data for the UI table
-        const hasData = parseCsvForTable(csvData, 
-          (data, headers) => {
-            if (onAnomalyDataReceived) {
-              console.log('Processing anomaly data with headers:', headers);
-              
-              // Filter out any rows with all empty values
-              const filteredData = data.filter(row => 
-                Object.values(row).some(value => 
-                  value !== null && value !== undefined && value !== ''
-                )
-              );
-              
-              onAnomalyDataReceived(filteredData, headers);
-            }
-          }, 
-          onAnomalyInsightsReceived
-        );
+        // Set to 100% when we get the response
+        setProgress(100);
         
-        setHasAnomalies(hasData);
+        // Handle non-200 responses properly
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`API Error (${response.status}): ${errorText}`);
+          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
         
-        toast.success('Anomaly detection completed with AI insights! CSV file is ready for download.');
-      } else {
-        // If not a CSV, just show the result
-        const result = await response.json();
-        toast.success('Anomaly detection with AI insights completed!');
-        console.log('Anomaly detection result:', result);
+        // Check content type to determine how to handle the response
+        const contentType = response.headers.get('content-type');
+        console.log(`Response content type: ${contentType}`);
         
-        // Parse mock CSV data for demo purposes
-        const hasData = parseCsvForTable(mockCsvData, 
-          (data, headers) => {
-            if (onAnomalyDataReceived) {
-              console.log('Using mock data with headers:', headers);
-              
-              // Filter out any rows with all empty values
-              const filteredData = data.filter(row => 
-                Object.values(row).some(value => 
-                  value !== null && value !== undefined && value !== ''
-                )
-              );
-              
-              onAnomalyDataReceived(filteredData, headers);
-            }
-          }, 
-          onAnomalyInsightsReceived
-        );
-        
-        setHasAnomalies(hasData);
+        if (contentType && contentType.includes('text/csv')) {
+          // Handle CSV response
+          const csvData = await response.text();
+          
+          // Create blob and download link
+          const blob = new Blob([csvData], { type: 'text/csv' });
+          const url = window.URL.createObjectURL(blob);
+          setResultFile(url);
+          
+          // Parse CSV data for the UI table
+          const hasData = parseCsvForTable(csvData, 
+            (data, headers) => {
+              if (onAnomalyDataReceived) {
+                console.log('Processing anomaly data with headers:', headers);
+                
+                // Filter out any rows with all empty values
+                const filteredData = data.filter(row => 
+                  Object.values(row).some(value => 
+                    value !== null && value !== undefined && value !== ''
+                  )
+                );
+                
+                onAnomalyDataReceived(filteredData, headers);
+              }
+            }, 
+            onAnomalyInsightsReceived
+          );
+          
+          setHasAnomalies(hasData);
+          
+          toast.success('Anomaly detection completed with AI insights! CSV file is ready for download.');
+        } else {
+          // Handle JSON response
+          let result;
+          try {
+            result = await response.json();
+            console.log('Anomaly detection API response:', result);
+          } catch (jsonError) {
+            console.error('Error parsing JSON response:', jsonError);
+            // If we can't parse JSON, try to get text content
+            const textContent = await response.text();
+            console.log('Raw response content:', textContent.substring(0, 200) + '...');
+            throw new Error('Invalid response format from server');
+          }
+          
+          toast.success('Anomaly detection with AI insights completed!');
+          
+          // Parse mock CSV data for demo purposes if real data not available
+          const hasData = parseCsvForTable(mockCsvData, 
+            (data, headers) => {
+              if (onAnomalyDataReceived) {
+                console.log('Using mock data with headers:', headers);
+                
+                // Filter out any rows with all empty values
+                const filteredData = data.filter(row => 
+                  Object.values(row).some(value => 
+                    value !== null && value !== undefined && value !== ''
+                  )
+                );
+                
+                onAnomalyDataReceived(filteredData, headers);
+              }
+            }, 
+            onAnomalyInsightsReceived
+          );
+          
+          setHasAnomalies(hasData);
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
       }
     } catch (error) {
       console.error('Anomaly detection error:', error);
