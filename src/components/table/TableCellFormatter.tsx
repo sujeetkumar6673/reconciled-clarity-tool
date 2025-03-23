@@ -39,9 +39,19 @@ export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, c
   }
   
   if (typeof value === 'number') {
-    return columnName.toLowerCase().includes('amount') 
-      ? `$${Math.abs(value).toFixed(2)}`
-      : value.toString();
+    // Format numeric values
+    const isAmount = columnName.toLowerCase().includes('amount') || 
+                     columnName.toLowerCase().includes('balance') ||
+                     columnName.toLowerCase().includes('difference');
+    
+    if (isAmount) {
+      // For positive/negative numbers, don't use absolute value
+      return value < 0 
+        ? `-$${Math.abs(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` 
+        : `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+    }
+    
+    return value.toLocaleString();
   }
   
   return value.toString();

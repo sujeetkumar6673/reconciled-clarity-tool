@@ -26,7 +26,26 @@ export const useAnomalyDetection = ({ onAnomalyDataReceived }: UseAnomalyDetecti
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
       
-      const values = lines[i].split(',').map(val => val.trim());
+      // Handle quoted fields with commas inside them
+      const values: string[] = [];
+      let currentValue = '';
+      let inQuotes = false;
+      
+      for (let j = 0; j < lines[i].length; j++) {
+        const char = lines[i][j];
+        
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(currentValue);
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      values.push(currentValue); // Add the last value
+      
+      // Create object with proper column mapping and unique ID
       const row: any = {
         id: `anomaly-${i}`,
         source: 'Anomaly Detection',
@@ -34,12 +53,17 @@ export const useAnomalyDetection = ({ onAnomalyDataReceived }: UseAnomalyDetecti
         dataType: 'anomaly'
       };
       
+      // Map all fields based on header names
       headers.forEach((header, index) => {
-        const value = values[index] || '';
-        if (/^-?\d+(\.\d+)?$/.test(value)) {
-          row[header] = parseFloat(value);
-        } else {
-          row[header] = value;
+        if (index < values.length) {
+          const value = values[index]?.trim() || '';
+          
+          // Try to convert numeric values
+          if (/^-?\d+(\.\d+)?$/.test(value)) {
+            row[header] = parseFloat(value);
+          } else {
+            row[header] = value;
+          }
         }
       });
       
