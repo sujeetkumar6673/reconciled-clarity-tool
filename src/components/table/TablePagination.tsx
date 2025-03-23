@@ -20,6 +20,14 @@ const TablePagination: React.FC<TablePaginationProps> = ({
 }) => {
   if (filteredDataLength === 0) return null;
 
+  const handlePrevious = () => {
+    setCurrentPage(Math.max(currentPage - 1, 1));
+  };
+
+  const handleNext = () => {
+    setCurrentPage(Math.min(currentPage + 1, totalPages));
+  };
+
   return (
     <div className="flex items-center justify-between mt-4">
       <div>
@@ -35,7 +43,7 @@ const TablePagination: React.FC<TablePaginationProps> = ({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          onClick={handlePrevious}
           disabled={currentPage === 1}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -67,7 +75,7 @@ const TablePagination: React.FC<TablePaginationProps> = ({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          onClick={handleNext}
           disabled={currentPage === totalPages}
         >
           <ArrowRight className="h-4 w-4" />
