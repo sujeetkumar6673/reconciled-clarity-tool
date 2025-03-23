@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock } from 'lucide-react';
+import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,57 +10,167 @@ import AnomalyTrendChart from './anomaly/AnomalyTrendChart';
 import AnomalyList from './anomaly/AnomalyList';
 import { AnomalyItem } from './anomaly/AnomalyCard';
 
-// Mock data for anomalies
+// Enhanced mock data for anomalies with AI insights
 const anomalyData: AnomalyItem[] = [
   { 
     id: 1, 
-    title: 'Balance Discrepancy', 
-    description: 'General Ledger balance doesn\'t match bank statement by $1,240.50',
+    title: 'Inconsistent Variations in Outstanding Balances', 
+    description: 'Several accounts showing inconsistent variations that exceed the normal threshold',
     severity: 'high',
     category: 'balance',
     date: '2023-05-22',
-    impact: '$1,240.50',
-    status: 'unresolved'
+    impact: '$17,000.00',
+    status: 'unresolved',
+    bucket: 'Bucket 1: Inconsistent Variations in Outstanding Balances',
+    anomalyCount: 17,
+    rootCauses: [
+      'Data entry errors leading to temporary inconsistencies',
+      'Timing differences in recording transactions',
+      'Misalignment in reconciliation processes or methodologies'
+    ],
+    suggestedActions: [
+      'Conduct a detailed review of data entry processes to ensure accuracy',
+      'Align transaction recording timing between systems',
+      'Standardize reconciliation methodologies across departments'
+    ],
+    sampleRecords: [
+      {
+        company: 'Doyle Ltd',
+        account: '740',
+        primaryAccount: 'COMMERCIAL LOANS',
+        secondaryAccount: 'INTEREST RECEIVABLE',
+        glBalance: 83000,
+        iHubBalance: 83000,
+        anomalyScore: -0.0121,
+        balanceDifference: 0.0
+      },
+      {
+        company: 'Galloway-Wyatt',
+        account: '493',
+        primaryAccount: 'ALL LOB LOANS',
+        secondaryAccount: 'PRINCIPAL',
+        glBalance: 22000,
+        iHubBalance: 22000,
+        anomalyScore: -0.0216,
+        balanceDifference: 0.0
+      }
+    ]
   },
   { 
     id: 2, 
-    title: 'Duplicate Transaction', 
-    description: 'Invoice #INV-2023-0542 was paid twice on different dates',
+    title: 'No Clear Pattern, Deviation Exceeds Threshold', 
+    description: 'Account balances showing deviations that exceed thresholds without clear patterns',
     severity: 'medium',
-    category: 'duplicate',
+    category: 'unclassified',
     date: '2023-05-18',
-    impact: '$458.75',
-    status: 'unresolved'
+    impact: '$17,000.00',
+    status: 'unresolved',
+    bucket: 'Bucket 11: No Clear Pattern, but Deviation Exceeds Threshold',
+    anomalyCount: 7,
+    rootCauses: [
+      'Unusual transactions that do not follow historical patterns',
+      'Errors in threshold settings or detection algorithms'
+    ],
+    suggestedActions: [
+      'Investigate each case individually to identify unique causes',
+      'Review and adjust threshold settings and anomaly detection algorithms'
+    ],
+    sampleRecords: [
+      {
+        company: 'Abbott-Munoz',
+        account: '327',
+        primaryAccount: 'RETAIL LOANS',
+        secondaryAccount: 'DEFERRED COSTS',
+        glBalance: 88000,
+        iHubBalance: 105000,
+        anomalyScore: -0.0275,
+        balanceDifference: -17000
+      }
+    ]
   },
   { 
     id: 3, 
-    title: 'Missing Transaction', 
-    description: 'Bank shows withdrawal of $890.25 with no corresponding GL entry',
+    title: 'Consistent Increase/Decrease in Balances', 
+    description: 'Systematic trend of increases or decreases in account balances',
     severity: 'high',
     category: 'missing',
     date: '2023-05-15',
-    impact: '$890.25',
-    status: 'unresolved'
+    impact: '$9,000.00',
+    status: 'unresolved',
+    bucket: 'Bucket 2: Consistent Increase or Decrease in Outstanding Balances',
+    anomalyCount: 6,
+    rootCauses: [
+      'Systematic errors in transaction processing',
+      'Consistent misreporting or misclassification of transactions'
+    ],
+    suggestedActions: [
+      'Audit transaction processing systems for systematic errors',
+      'Implement checks for consistent misreporting or misclassification'
+    ],
+    sampleRecords: [
+      {
+        company: 'Mcclain, Miller and Henderson',
+        account: '298',
+        primaryAccount: 'RETAIL LOANS',
+        secondaryAccount: 'INTEREST RECEIVABLE',
+        glBalance: 32000,
+        iHubBalance: 23000,
+        anomalyScore: -0.0190,
+        balanceDifference: 9000
+      }
+    ]
   },
   { 
     id: 4, 
-    title: 'Timing Discrepancy', 
-    description: 'Transaction recorded in GL on May 10, but cleared bank on May 15',
+    title: 'Reversal or Correction Entry Detected', 
+    description: 'Evidence of reversal or correction entries that require validation',
     severity: 'low',
     category: 'timing',
     date: '2023-05-10',
-    impact: '$325.00',
-    status: 'resolved'
+    impact: '$11,000.00',
+    status: 'resolved',
+    bucket: 'Bucket 8: Reversal or Correction Entry Detected',
+    anomalyCount: 3,
+    rootCauses: [
+      'Reversal entries made to correct prior errors',
+      'Adjustments not properly documented or communicated'
+    ],
+    suggestedActions: [
+      'Ensure all reversal and correction entries are properly documented',
+      'Enhance communication protocols for adjustments'
+    ],
+    sampleRecords: [
+      {
+        company: 'Guzman, Hoffman and Baldwin',
+        account: '365',
+        primaryAccount: 'COMMERCIAL LOANS',
+        secondaryAccount: 'DEFERRED COSTS',
+        glBalance: 82000,
+        iHubBalance: 93000,
+        anomalyScore: -0.0730,
+        balanceDifference: -11000
+      }
+    ]
   },
   { 
     id: 5, 
-    title: 'Unclassified Transaction', 
-    description: 'Bank deposit of $1,532.80 not classified in GL accounts',
+    title: 'Balances Not in Line with Previous Months', 
+    description: 'Account balances showing unexpected deviations from historical patterns',
     severity: 'medium',
     category: 'unclassified',
     date: '2023-05-12',
     impact: '$1,532.80',
-    status: 'unresolved'
+    status: 'unresolved',
+    bucket: 'Bucket 4: Outstanding Balances Not in Line with Previous Months',
+    anomalyCount: 3,
+    rootCauses: [
+      'Seasonal fluctuations not accounted for in analysis',
+      'Changes in business operations or external factors'
+    ],
+    suggestedActions: [
+      'Incorporate seasonal adjustments into analysis',
+      'Investigate changes in business operations or external factors impacting balances'
+    ]
   },
 ];
 
@@ -76,12 +186,19 @@ const chartData = [
 const AnomalySection = () => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+
+  // Get unique buckets from the data
+  const uniqueBuckets = Array.from(
+    new Set(anomalyData.map(a => a.bucket?.split(':')[0]).filter(Boolean))
+  );
 
   const filteredAnomalies = anomalyData.filter(anomaly => {
     if (selectedTab === 'high' && anomaly.severity !== 'high') return false;
     if (selectedTab === 'resolved' && anomaly.status !== 'resolved') return false;
     if (selectedTab === 'unresolved' && anomaly.status !== 'unresolved') return false;
     if (selectedCategory && anomaly.category !== selectedCategory) return false;
+    if (selectedBucket && (!anomaly.bucket || !anomaly.bucket.startsWith(selectedBucket))) return false;
     return true;
   });
 
@@ -102,6 +219,16 @@ const AnomalySection = () => {
     }
   };
 
+  const getBucketIcon = (bucket: string) => {
+    if (bucket.includes('Bucket 1')) return <Layers className="h-4 w-4" />;
+    if (bucket.includes('Bucket 2')) return <ArrowDown className="h-4 w-4" />;
+    if (bucket.includes('Bucket 4')) return <Calendar className="h-4 w-4" />;
+    if (bucket.includes('Bucket 5')) return <ArrowUp className="h-4 w-4" />;
+    if (bucket.includes('Bucket 8')) return <RefreshCw className="h-4 w-4" />;
+    if (bucket.includes('Bucket 11')) return <PieChart className="h-4 w-4" />;
+    return <Briefcase className="h-4 w-4" />;
+  };
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'high':
@@ -117,15 +244,15 @@ const AnomalySection = () => {
 
   // Calculate summary data
   const resolvedCount = anomalyData.filter(a => a.status === 'resolved').length;
-  const totalImpact = '$4,447.30';
+  const totalImpact = '$38,973.05';
   const resolutionRate = '20%';
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       <div className="mb-8">
-        <h2 className="text-2xl font-medium text-center mb-2">Anomaly Detection</h2>
+        <h2 className="text-2xl font-medium text-center mb-2">AI-Enhanced Anomaly Detection</h2>
         <p className="text-muted-foreground text-center max-w-2xl mx-auto">
-          Identify and resolve reconciliation anomalies and discrepancies
+          Identify and resolve reconciliation anomalies and discrepancies with AI-powered insights
         </p>
       </div>
 
@@ -147,7 +274,7 @@ const AnomalySection = () => {
           <Card className="glass-card h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Anomaly Details</CardTitle>
+                <CardTitle>Anomaly Insights</CardTitle>
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm" className="h-8">
                     <Filter className="h-3.5 w-3.5 mr-1" />
@@ -167,7 +294,8 @@ const AnomalySection = () => {
                   <TabsTrigger value="resolved">Resolved</TabsTrigger>
                 </TabsList>
                 
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="text-xs font-medium text-muted-foreground mr-1 mt-1">Categories:</div>
                   {['balance', 'duplicate', 'missing', 'timing', 'unclassified'].map(category => (
                     <Badge
                       key={category}
@@ -183,7 +311,24 @@ const AnomalySection = () => {
                   ))}
                 </div>
                 
-                <TabsContent value="all" className="space-y-4 mt-0">
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="text-xs font-medium text-muted-foreground mr-1 mt-1">AI Buckets:</div>
+                  {uniqueBuckets.map(bucket => (
+                    <Badge
+                      key={bucket}
+                      variant={selectedBucket === bucket ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => 
+                        setSelectedBucket(selectedBucket === bucket ? null : bucket)
+                      }
+                    >
+                      {getBucketIcon(bucket as string)}
+                      <span className="ml-1">{bucket}</span>
+                    </Badge>
+                  ))}
+                </div>
+                
+                <TabsContent value="all" className="space-y-4 mt-2">
                   <AnomalyList 
                     filteredAnomalies={filteredAnomalies}
                     getCategoryIcon={getCategoryIcon}
@@ -191,7 +336,7 @@ const AnomalySection = () => {
                   />
                 </TabsContent>
                 
-                <TabsContent value="high" className="space-y-4 mt-0">
+                <TabsContent value="high" className="space-y-4 mt-2">
                   <AnomalyList 
                     filteredAnomalies={filteredAnomalies}
                     getCategoryIcon={getCategoryIcon}
@@ -199,7 +344,7 @@ const AnomalySection = () => {
                   />
                 </TabsContent>
                 
-                <TabsContent value="unresolved" className="space-y-4 mt-0">
+                <TabsContent value="unresolved" className="space-y-4 mt-2">
                   <AnomalyList 
                     filteredAnomalies={filteredAnomalies}
                     getCategoryIcon={getCategoryIcon}
@@ -207,7 +352,7 @@ const AnomalySection = () => {
                   />
                 </TabsContent>
                 
-                <TabsContent value="resolved" className="space-y-4 mt-0">
+                <TabsContent value="resolved" className="space-y-4 mt-2">
                   <AnomalyList 
                     filteredAnomalies={filteredAnomalies}
                     getCategoryIcon={getCategoryIcon}
@@ -220,7 +365,7 @@ const AnomalySection = () => {
               {/* Content moved to TabsContent components */}
             </CardContent>
             <CardFooter>
-              <Button className="w-full">View All Anomalies</Button>
+              <Button className="w-full">Export Anomaly Insights</Button>
             </CardFooter>
           </Card>
         </div>
