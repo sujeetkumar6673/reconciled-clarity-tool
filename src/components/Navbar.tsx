@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Moon, Sun, UploadCloud, PieChart, AlertTriangle, MessageSquare } from 'lucide-react';
+import { Menu, X, Moon, Sun, UploadCloud, PieChart, AlertTriangle, MessageSquare, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +53,10 @@ export const Navbar = () => {
         <NavLink href="#data" icon={<PieChart className="w-4 h-4 mr-2" />} text="Data" />
         <NavLink href="#anomalies" icon={<AlertTriangle className="w-4 h-4 mr-2" />} text="Anomalies" />
         <NavLink href="#insights" icon={<MessageSquare className="w-4 h-4 mr-2" />} text="AI Insights" />
+        <Link to="/learn-more" className="flex items-center text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200">
+          <Info className="w-4 h-4 mr-2" />
+          <span>Learn More</span>
+        </Link>
       </nav>
 
       <div className="flex items-center space-x-4">
@@ -86,6 +90,14 @@ export const Navbar = () => {
             <MobileNavLink href="#data" icon={<PieChart className="w-5 h-5 mr-3" />} text="Data" onClick={() => setIsMobileMenuOpen(false)} />
             <MobileNavLink href="#anomalies" icon={<AlertTriangle className="w-5 h-5 mr-3" />} text="Anomalies" onClick={() => setIsMobileMenuOpen(false)} />
             <MobileNavLink href="#insights" icon={<MessageSquare className="w-5 h-5 mr-3" />} text="AI Insights" onClick={() => setIsMobileMenuOpen(false)} />
+            <Link 
+              to="/learn-more" 
+              className="flex items-center py-2 text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400 transition-colors duration-200"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Info className="w-5 h-5 mr-3" />
+              <span className="font-medium">Learn More</span>
+            </Link>
           </div>
         </div>
       )}

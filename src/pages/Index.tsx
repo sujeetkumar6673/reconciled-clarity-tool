@@ -10,6 +10,7 @@ import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -78,8 +79,8 @@ const Index = () => {
             <Button size="lg" className="px-8 py-6 rounded-full text-lg" onClick={() => document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' })}>
               Get Started
             </Button>
-            <Button size="lg" variant="outline" className="px-8 py-6 rounded-full text-lg">
-              Learn More
+            <Button size="lg" variant="outline" className="px-8 py-6 rounded-full text-lg" asChild>
+              <Link to="/learn-more">Learn More</Link>
             </Button>
           </div>
 
