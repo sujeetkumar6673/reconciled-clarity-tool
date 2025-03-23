@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -49,32 +50,28 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
-  // Enhanced deduplication function to handle various cases and transformations
+  // Improved and simplified deduplication function to handle various cases
   const deduplicateHeaders = (headers: string[]): string[] => {
-    const uniqueHeaders: string[] = [];
-    const seen = new Set<string>();
+    if (!headers || headers.length === 0) return [];
     
-    // First pass: normalize and check for exact duplicates
-    for (const header of headers) {
-      if (!header || header.trim() === '') {
-        // Skip empty headers
-        continue;
-      }
-      
-      // Create a fully normalized version for comparison (lowercase, no spaces or special chars)
+    // Filter out empty headers first
+    const nonEmptyHeaders = headers.filter(h => h && h.trim() !== '');
+    
+    // Create a map to track unique normalized headers
+    const seen = new Map<string, boolean>();
+    const result: string[] = [];
+    
+    for (const header of nonEmptyHeaders) {
+      // Create a normalized version for comparison (lowercase, no spaces or special chars)
       const normalized = header.toLowerCase().replace(/[^a-z0-9]/g, '');
       
-      if (normalized === '' || seen.has(normalized)) {
-        // Skip if normalized is empty or we've seen it before
-        continue;
+      if (normalized && !seen.has(normalized)) {
+        seen.set(normalized, true);
+        result.push(header);
       }
-      
-      // Mark this normalized form as seen and keep the original header
-      seen.add(normalized);
-      uniqueHeaders.push(header);
     }
     
-    return uniqueHeaders;
+    return result;
   };
 
   const detectAnomalies = async () => {
@@ -84,9 +81,16 @@ export const useAnomalyDetection = ({
     try {
       toast.info('Starting anomaly detection process with AI insights...');
       
+      // Increased timeout for anomaly detection - 90 seconds
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
+      
       const response = await fetch(`${API_BASE_URL}/test`, {
         method: 'GET',
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -110,10 +114,9 @@ export const useAnomalyDetection = ({
         const hasData = parseCsvForTable(csvData, 
           (data, headers) => {
             if (onAnomalyDataReceived) {
-              // Apply enhanced deduplication to headers
+              // Apply improved deduplication to headers
               const deduplicatedHeaders = deduplicateHeaders(headers);
-              console.log('Original headers:', headers);
-              console.log('Deduplicated headers:', deduplicatedHeaders);
+              console.log('Processing anomaly data with headers:', deduplicatedHeaders.length);
               
               // Filter out any rows with all empty values
               const filteredData = data.filter(row => 
@@ -141,10 +144,9 @@ export const useAnomalyDetection = ({
         const hasData = parseCsvForTable(mockCsvData, 
           (data, headers) => {
             if (onAnomalyDataReceived) {
-              // Apply enhanced deduplication to headers
+              // Apply improved deduplication to headers
               const deduplicatedHeaders = deduplicateHeaders(headers);
-              console.log('Original headers (mock):', headers);
-              console.log('Deduplicated headers (mock):', deduplicatedHeaders);
+              console.log('Using mock data with headers:', deduplicatedHeaders.length);
               
               // Filter out any rows with all empty values
               const filteredData = data.filter(row => 
@@ -163,16 +165,20 @@ export const useAnomalyDetection = ({
       }
     } catch (error) {
       console.error('Anomaly detection error:', error);
-      toast.error(`Anomaly detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      if (error.name === 'AbortError') {
+        toast.error('Anomaly detection request timed out. Using fallback data.');
+      } else {
+        toast.error(`Anomaly detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
       
       // For demo purposes - simulate successful detection even on error
       const hasData = parseCsvForTable(mockCsvData, 
         (data, headers) => {
           if (onAnomalyDataReceived) {
-            // Apply enhanced deduplication to headers
+            // Apply improved deduplication to headers
             const deduplicatedHeaders = deduplicateHeaders(headers);
-            console.log('Original headers (error fallback):', headers);
-            console.log('Deduplicated headers (error fallback):', deduplicatedHeaders);
+            console.log('Using fallback data with headers:', deduplicatedHeaders.length);
             
             // Filter out any rows with all empty values
             const filteredData = data.filter(row => 

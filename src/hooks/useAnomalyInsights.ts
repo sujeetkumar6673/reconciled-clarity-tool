@@ -53,9 +53,9 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
     try {
       toast.info('Generating detailed AI insights...');
       
-      // Increase timeout to prevent hanging requests - 60 seconds
+      // Increase timeout to prevent hanging requests - 120 seconds (2 minutes)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout (increased from 20)
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout (increased from 60)
       
       // Call the real API endpoint with error handling
       console.log('Fetching insights from API:', `${API_BASE_URL}/insights`);
@@ -102,18 +102,18 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       let totalAnomaliesCount = 0;
       let totalImpactValue = 0;
       
-      // Check if result is an array (old API format) or object with insights property (new format)
-      if (Array.isArray(result)) {
+      // Check if result has the expected structure
+      if (result.total_anomalies !== undefined && result.insights && Array.isArray(result.insights)) {
+        // This is the new expected format with total_anomalies, total_impact, and insights array
+        console.log('Processing structured format with insights array:', result.total_anomalies, 'anomalies');
+        insightsArray = result.insights;
+        totalAnomaliesCount = result.total_anomalies;
+        totalImpactValue = result.total_impact || 0;
+      } else if (Array.isArray(result)) {
         // Old format - direct array of insights
         console.log('Processing direct array format');
         insightsArray = result;
         totalAnomaliesCount = result.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
-      } else if (result.insights && Array.isArray(result.insights)) {
-        // New format with total_anomalies, total_impact, and insights array
-        console.log('Processing structured format with insights array');
-        insightsArray = result.insights;
-        totalAnomaliesCount = result.total_anomalies || 0;
-        totalImpactValue = result.total_impact || 0;
       } else if (result.message) {
         // Handle case where only a message is returned
         console.log('Response contains only a message:', result.message);

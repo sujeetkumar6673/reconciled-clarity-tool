@@ -9,6 +9,8 @@ interface TableCellFormatterProps {
 
 // Enhanced column name normalization for deduplication
 export const normalizeColumnName = (columnName: string): string => {
+  if (!columnName) return '';
+  
   // Handle column names like "Column Name [1]" or "Column Name (1)" or duplicates with spaces
   return columnName
     .toLowerCase()
@@ -133,26 +135,24 @@ export const getDataTypeDisplayValue = (dataType: string) => {
   return dataType.charAt(0).toUpperCase() + dataType.slice(1);
 };
 
-// Add a utility function to deduplicate headers
+// Improved utility function to deduplicate headers
 export const deduplicateHeaders = (headers: string[]): string[] => {
-  const uniqueHeaders = new Map<string, number>();
+  if (!headers || headers.length === 0) return [];
   
-  return headers.map(header => {
-    const normalizedHeader = normalizeColumnName(header);
-    
-    // If this normalized header already exists, add a counter
-    if (uniqueHeaders.has(normalizedHeader)) {
-      const count = uniqueHeaders.get(normalizedHeader)! + 1;
-      uniqueHeaders.set(normalizedHeader, count);
-      // Skip adding the counter if this is a duplicate that already has a counter
-      if (!/\[\d+\]$/.test(header) && !/\(\d+\)$/.test(header)) {
-        return `${header} [${count}]`;
-      }
-      return header;
+  // First remove empty headers
+  const nonEmptyHeaders = headers.filter(h => h && h.trim() !== '');
+  
+  // Create a map to track unique normalized headers
+  const uniqueNormalizedHeaders = new Map<string, string>();
+  
+  // First pass: collect all unique normalized headers with their original versions
+  nonEmptyHeaders.forEach(header => {
+    const normalized = normalizeColumnName(header);
+    if (normalized) {
+      uniqueNormalizedHeaders.set(normalized, header);
     }
-    
-    // First time seeing this header
-    uniqueHeaders.set(normalizedHeader, 0);
-    return header;
   });
+  
+  // Convert map values to array
+  return Array.from(uniqueNormalizedHeaders.values());
 };

@@ -7,7 +7,7 @@ export const API_BASE_URL = 'http://127.0.0.1:8000';
 // Helper function to determine severity based on bucket ID
 export const getSeverityByBucketId = (bucketId: number): string => {
   if ([1, 2].includes(bucketId)) return 'high';
-  if ([11, 4].includes(bucketId)) return 'medium';
+  if ([11, 4, 5].includes(bucketId)) return 'medium';
   return 'low';
 };
 
@@ -16,8 +16,10 @@ export const getCategoryByBucketId = (bucketId: number): string => {
   if (bucketId === 1) return 'balance';
   if (bucketId === 2) return 'missing';
   if (bucketId === 8) return 'timing';
+  if (bucketId === 7) return 'duplicate';
+  if (bucketId === 5) return 'trend';
   if (bucketId === 11 || bucketId === 4) return 'unclassified';
-  return 'duplicate';
+  return 'unclassified';
 };
 
 // Generate sample records from companies
@@ -39,7 +41,7 @@ export const generateSampleRecordsFromCompanies = (companies: string[]): Anomaly
   });
 };
 
-// Parse CSV data for table display
+// Improved CSV parser with better header handling
 export const parseCsvForTable = (
   csvData: string,
   onAnomalyDataReceived?: (data: any[], headers: string[]) => void,
@@ -50,7 +52,14 @@ export const parseCsvForTable = (
   const lines = csvData.split('\n').filter(line => line.trim() !== '');
   if (lines.length === 0) return false;
   
-  const headers = lines[0].split(',').map(header => header.trim());
+  // Extract and clean headers 
+  const rawHeaders = lines[0].split(',').map(header => header.trim());
+  
+  // Filter out empty headers
+  const headers = rawHeaders.filter(header => header && header.trim() !== '');
+  
+  console.log(`CSV parsing: Found ${headers.length} non-empty headers out of ${rawHeaders.length} total`);
+  
   const parsedData: any[] = [];
   
   for (let i = 1; i < lines.length; i++) {
@@ -83,9 +92,9 @@ export const parseCsvForTable = (
       dataType: 'anomaly'
     };
     
-    // Map all fields based on header names
+    // Map only valid fields based on clean header names
     headers.forEach((header, index) => {
-      if (index < values.length) {
+      if (index < values.length && header) {
         const value = values[index]?.trim() || '';
         
         // Try to convert numeric values
@@ -97,10 +106,25 @@ export const parseCsvForTable = (
       }
     });
     
-    parsedData.push(row);
+    // Only include rows that have some data besides the default properties
+    const hasCustomData = Object.keys(row).some(key => 
+      !['id', 'source', 'status', 'dataType'].includes(key) && 
+      row[key] !== undefined && 
+      row[key] !== null && 
+      row[key] !== ''
+    );
+    
+    if (hasCustomData) {
+      parsedData.push(row);
+    }
   }
   
-  onAnomalyDataReceived(parsedData, headers);
+  console.log(`CSV parsing: Processed ${parsedData.length} data rows with ${headers.length} columns`);
   
-  return parsedData.length > 0;
+  if (parsedData.length > 0) {
+    onAnomalyDataReceived(parsedData, headers);
+    return true;
+  }
+  
+  return false;
 };
