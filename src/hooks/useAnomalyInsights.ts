@@ -17,6 +17,8 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
   const fallbackToMockInsights = () => {
     if (!onAnomalyInsightsReceived) return;
     
+    console.log('Using mock insights data as fallback');
+    
     // Use the mock data as a fallback
     const anomalyItems: AnomalyItem[] = mockInsightsData.map((insight, index) => {
       return {
@@ -36,6 +38,7 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       };
     });
     
+    setInsightsData(mockInsightsData);
     onAnomalyInsightsReceived(anomalyItems);
     toast.success('AI insights generated using fallback data!');
   };
@@ -46,13 +49,40 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
     try {
       toast.info('Generating detailed AI insights...');
       
-      // Call the real API endpoint
+      // Add a timeout to the fetch to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+      
+      // Call the real API endpoint with error handling
+      console.log('Fetching insights from API:', `${API_BASE_URL}/insights`);
+      
+      // Using fetch with timeout
       const response = await fetch(`${API_BASE_URL}/insights`, {
         method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        }
       });
       
+      clearTimeout(timeoutId);
+      
+      console.log('API response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        let errorMessage = `Error ${response.status}: ${response.statusText}`;
+        
+        // Try to get more detailed error from response
+        try {
+          const errorData = await response.json();
+          if (errorData.detail) {
+            errorMessage = errorData.detail;
+          }
+        } catch (e) {
+          // If we can't parse the error response, just use the status text
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
@@ -61,6 +91,13 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       // Process the insights data
       const insightsData = result.insights || [];
       setInsightsData(insightsData);
+      
+      // If no insights data is returned, fallback to mock data
+      if (!insightsData || insightsData.length === 0) {
+        console.warn('No insights data returned from API, using fallback data');
+        fallbackToMockInsights();
+        return;
+      }
       
       // If onAnomalyInsightsReceived is provided, convert the insights data to AnomalyItem format
       if (onAnomalyInsightsReceived && insightsData.length > 0) {
@@ -88,9 +125,17 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       toast.success('AI insights generated successfully!');
     } catch (error) {
       console.error('Insights generation error:', error);
-      toast.error(`Failed to generate insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // Fallback to mock data in case of error
+      // Check for specific error types and display appropriate messages
+      if (error.name === 'AbortError') {
+        toast.error('Insights generation timed out. Using fallback data.');
+      } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        toast.error('Network error: Cannot connect to the server. Using fallback data.');
+      } else {
+        toast.error(`Failed to generate insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      
+      // Fallback to mock data in case of any error
       fallbackToMockInsights();
     } finally {
       setIsGeneratingInsights(false);
