@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import FileUpload from '@/components/FileUpload';
+import FileUploadSection from '@/components/upload/FileUploadSection';
 import DynamicTable from '@/components/DynamicTable';
 import AnomalySection from '@/components/AnomalySection';
 import InsightsPanel from '@/components/InsightsPanel';
+import AnomalyDetectionButton from '@/components/anomaly/AnomalyDetectionButton';
 import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -75,7 +76,7 @@ const Index = () => {
       {/* File Upload Section */}
       <section id="upload" className="py-20 px-4 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          <FileUpload onDataProcessed={handleDataProcessed} />
+          <FileUploadSection onDataProcessed={handleDataProcessed} />
         </div>
       </section>
       
@@ -84,6 +85,10 @@ const Index = () => {
         <div className="max-w-6xl mx-auto animate-fade-in-up">
           {showTable && (currentData.length > 0 || historicalData.length > 0) ? (
             <div className="space-y-8">
+              <div className="flex justify-center mb-8">
+                <AnomalyDetectionButton />
+              </div>
+            
               <Tabs defaultValue="current" className="w-full">
                 <div className="flex justify-center mb-6">
                   <TabsList>
