@@ -5,7 +5,6 @@ import { DynamicColumnData } from '@/lib/csv-parser';
 import { AnomalyItem, UseAnomalyDetectionProps } from '@/types/anomaly';
 import { API_BASE_URL, parseCsvForTable } from '@/utils/anomalyUtils';
 import { useAnomalyInsights } from './useAnomalyInsights';
-import { mockCsvData } from '@/data/mockAnomalyData';
 
 export const useAnomalyDetection = ({ 
   onAnomalyDataReceived, 
@@ -124,36 +123,38 @@ export const useAnomalyDetection = ({
           try {
             result = await response.json();
             console.log('Anomaly detection API response:', result);
+            
+            if (result && result.data && Array.isArray(result.data)) {
+              // Process JSON data directly
+              if (onAnomalyDataReceived) {
+                // Transform the data to match the expected format
+                const jsonData = result.data.map((item: any, index: number) => ({
+                  id: `anomaly-${index}`,
+                  source: 'Anomaly Detection',
+                  status: 'Unmatched',
+                  dataType: 'anomaly',
+                  ...item
+                }));
+                
+                // Extract headers from the first item if available
+                const headers = result.data.length > 0 
+                  ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
+                  : [];
+                
+                onAnomalyDataReceived(jsonData, headers);
+              }
+              
+              setHasAnomalies(result.data.length > 0);
+              toast.success(`Anomaly detection completed! Found ${result.anomaly_count || result.data.length} anomalies.`);
+            } else {
+              throw new Error('Invalid data structure in API response');
+            }
           } catch (jsonError) {
-            console.error('Error parsing JSON response:', jsonError);
-            // If we can't parse JSON, try to get text content
+            console.error('Error parsing or processing JSON response:', jsonError);
             const textContent = await response.text();
             console.log('Raw response content:', textContent.substring(0, 200) + '...');
             throw new Error('Invalid response format from server');
           }
-          
-          toast.success('Anomaly detection with AI insights completed!');
-          
-          // Parse mock CSV data for demo purposes if real data not available
-          const hasData = parseCsvForTable(mockCsvData, 
-            (data, headers) => {
-              if (onAnomalyDataReceived) {
-                console.log('Using mock data with headers:', headers);
-                
-                // Filter out any rows with all empty values
-                const filteredData = data.filter(row => 
-                  Object.values(row).some(value => 
-                    value !== null && value !== undefined && value !== ''
-                  )
-                );
-                
-                onAnomalyDataReceived(filteredData, headers);
-              }
-            }, 
-            onAnomalyInsightsReceived
-          );
-          
-          setHasAnomalies(hasData);
         }
       } catch (fetchError) {
         clearTimeout(timeoutId);
@@ -163,31 +164,13 @@ export const useAnomalyDetection = ({
       console.error('Anomaly detection error:', error);
       
       if (error.name === 'AbortError') {
-        toast.error('Anomaly detection request timed out. Using fallback data.');
+        toast.error('Anomaly detection request timed out.');
       } else {
         toast.error(`Anomaly detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
       
-      // For demo purposes - simulate successful detection even on error
-      const hasData = parseCsvForTable(mockCsvData, 
-        (data, headers) => {
-          if (onAnomalyDataReceived) {
-            console.log('Using fallback data with headers:', headers);
-            
-            // Filter out any rows with all empty values
-            const filteredData = data.filter(row => 
-              Object.values(row).some(value => 
-                value !== null && value !== undefined && value !== ''
-              )
-            );
-            
-            onAnomalyDataReceived(filteredData, headers);
-          }
-        }, 
-        onAnomalyInsightsReceived
-      );
-      
-      setHasAnomalies(hasData);
+      // No mock data fallback - just show error
+      setHasAnomalies(false);
     } finally {
       setIsDetecting(false);
     }

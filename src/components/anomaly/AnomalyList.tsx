@@ -14,7 +14,7 @@ const AnomalyList: React.FC<AnomalyListProps> = ({
   getCategoryIcon, 
   getSeverityColor 
 }) => {
-  // Calculate total anomalies from all categories - robustly handle undefined or invalid anomalyCount
+  // Calculate total anomalies from all categories - handle different data formats
   const totalAnomalyCount = filteredAnomalies.reduce(
     (total, anomaly) => {
       // Handle various formats of anomalyCount (number, string, undefined, null)
@@ -23,6 +23,9 @@ const AnomalyList: React.FC<AnomalyListProps> = ({
       } else if (typeof anomaly.anomalyCount === 'string') {
         const parsed = parseInt(anomaly.anomalyCount, 10);
         return !isNaN(parsed) ? total + parsed : total;
+      } else if (typeof anomaly.count === 'number' && !isNaN(anomaly.count)) {
+        // Some APIs might return 'count' instead of 'anomalyCount'
+        return total + anomaly.count;
       }
       return total;
     }, 
@@ -33,7 +36,8 @@ const AnomalyList: React.FC<AnomalyListProps> = ({
     return (
       <div className="space-y-4">
         <div className="text-sm text-muted-foreground mb-2">
-          Showing {filteredAnomalies.length} anomaly {filteredAnomalies.length === 1 ? 'category' : 'categories'} with a total of {totalAnomalyCount} detected anomalies
+          Showing {filteredAnomalies.length} anomaly {filteredAnomalies.length === 1 ? 'category' : 'categories'} 
+          {totalAnomalyCount > 0 && ` with a total of ${totalAnomalyCount} detected anomalies`}
         </div>
         {filteredAnomalies.map(anomaly => (
           <AnomalyCard 

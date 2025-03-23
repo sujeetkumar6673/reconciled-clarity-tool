@@ -67,8 +67,8 @@ export const parseCsvForTable = (
     
     let processedHeaders: string[] = [];
     
-    // Check if headers contain quotes and commas
-    if (rawHeaderLine.includes('"') && rawHeaderLine.includes(',')) {
+    // Check if headers contain quotes
+    if (rawHeaderLine.includes('"')) {
       console.log("CSV Parser - Processing quoted headers");
       let inQuotes = false;
       let currentHeader = "";
