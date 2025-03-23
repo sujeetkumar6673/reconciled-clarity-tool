@@ -15,6 +15,7 @@ const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentData, setCurrentData] = useState<DynamicColumnData[]>([]);
   const [historicalData, setHistoricalData] = useState<DynamicColumnData[]>([]);
+  const [anomalyData, setAnomalyData] = useState<DynamicColumnData[]>([]);
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
 
@@ -36,6 +37,23 @@ const Index = () => {
     setTimeout(() => {
       document.getElementById('data')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+  };
+
+  const handleAnomalyDataReceived = (data: DynamicColumnData[], headers: string[]) => {
+    setAnomalyData(data);
+    
+    // Merge new headers with existing ones
+    const allHeaders = [...new Set([...tableHeaders, ...headers])];
+    setTableHeaders(allHeaders);
+    
+    // If we have anomaly data but not showing tables yet, show them
+    if (data.length > 0 && !showTable) {
+      setShowTable(true);
+      // Scroll to the data table section
+      setTimeout(() => {
+        document.getElementById('data')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
   };
 
   return (
@@ -83,10 +101,10 @@ const Index = () => {
       {/* Data Table Section */}
       <section id="data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          {showTable && (currentData.length > 0 || historicalData.length > 0) ? (
+          {showTable || anomalyData.length > 0 ? (
             <div className="space-y-8">
               <div className="flex justify-center mb-8">
-                <AnomalyDetectionButton />
+                <AnomalyDetectionButton onAnomalyDataReceived={handleAnomalyDataReceived} />
               </div>
             
               <Tabs defaultValue="current" className="w-full">
@@ -94,6 +112,7 @@ const Index = () => {
                   <TabsList>
                     <TabsTrigger value="current" className="px-6">Current Data</TabsTrigger>
                     <TabsTrigger value="historical" className="px-6">Historical Data</TabsTrigger>
+                    <TabsTrigger value="anomaly" className="px-6">Anomaly Data</TabsTrigger>
                   </TabsList>
                 </div>
                 
@@ -120,6 +139,20 @@ const Index = () => {
                       <h3 className="text-xl font-medium mb-2">No Historical Data Available</h3>
                       <p className="text-muted-foreground max-w-xl mx-auto mb-4">
                         Please upload historical data files to view them here.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="anomaly">
+                  <h2 className="text-2xl font-medium text-center mb-6">Anomaly Detection Data</h2>
+                  {anomalyData.length > 0 ? (
+                    <DynamicTable data={anomalyData} headers={tableHeaders} />
+                  ) : (
+                    <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                      <h3 className="text-xl font-medium mb-2">No Anomaly Data Available</h3>
+                      <p className="text-muted-foreground max-w-xl mx-auto mb-4">
+                        Click the "Detect Anomalies" button above to generate anomaly data.
                       </p>
                     </div>
                   )}

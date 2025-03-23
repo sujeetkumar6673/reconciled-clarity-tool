@@ -3,11 +3,16 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { DynamicColumnData } from '@/lib/csv-parser';
 
 // API base URL configuration
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
-const AnomalyDetectionButton: React.FC = () => {
+interface AnomalyDetectionButtonProps {
+  onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
+}
+
+const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({ onAnomalyDataReceived }) => {
   const [isDetecting, setIsDetecting] = useState(false);
   const [resultFile, setResultFile] = useState<string | null>(null);
 
@@ -34,6 +39,40 @@ const AnomalyDetectionButton: React.FC = () => {
         const blob = new Blob([csvData], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         setResultFile(url);
+        
+        // Parse CSV data for the UI table
+        if (onAnomalyDataReceived) {
+          const lines = csvData.split('\n').filter(line => line.trim() !== '');
+          if (lines.length > 0) {
+            const headers = lines[0].split(',').map(header => header.trim());
+            const parsedData: DynamicColumnData[] = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+              if (!lines[i].trim()) continue;
+              
+              const values = lines[i].split(',').map(val => val.trim());
+              const row: any = {
+                id: `anomaly-${i}`,
+                source: 'Anomaly Detection',
+                status: 'Unmatched',
+                dataType: 'anomaly'
+              };
+              
+              headers.forEach((header, index) => {
+                const value = values[index] || '';
+                if (/^-?\d+(\.\d+)?$/.test(value)) {
+                  row[header] = parseFloat(value);
+                } else {
+                  row[header] = value;
+                }
+              });
+              
+              parsedData.push(row as DynamicColumnData);
+            }
+            
+            onAnomalyDataReceived(parsedData, headers);
+          }
+        }
         
         toast.success('Anomaly detection completed! CSV file is ready for download.');
       } else {
