@@ -12,6 +12,8 @@ interface UseAnomalyInsightsProps {
 export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsightsProps = {}) => {
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [insightsData, setInsightsData] = useState<InsightResponse[]>([]);
+  const [totalAnomalies, setTotalAnomalies] = useState<number>(0);
+  const [totalImpact, setTotalImpact] = useState<number>(0);
 
   // Fallback function for mock insights in case of API failure
   const fallbackToMockInsights = () => {
@@ -38,6 +40,8 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       };
     });
     
+    const mockTotalAnomalies = anomalyItems.reduce((total, item) => total + (item.anomalyCount || 0), 0);
+    setTotalAnomalies(mockTotalAnomalies);
     setInsightsData(mockInsightsData);
     onAnomalyInsightsReceived(anomalyItems);
     toast.success('AI insights generated using fallback data!');
@@ -88,22 +92,29 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       const result = await response.json();
       console.log('AI insights response:', result);
       
-      // Process the insights data - handle both array format and nested format
+      // Process the insights data with new format handling
       let insightsData: InsightResponse[] = [];
+      let totalAnomaliesCount = 0;
+      let totalImpactValue = 0;
       
       if (Array.isArray(result)) {
         // Direct array of insights
         insightsData = result;
+        totalAnomaliesCount = result.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
       } else if (result.insights && Array.isArray(result.insights)) {
-        // Nested insights object
+        // New structured format with insights array and total_anomalies
         insightsData = result.insights;
+        totalAnomaliesCount = result.total_anomalies || insightsData.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
+        totalImpactValue = result.total_impact || 0;
       } else {
         console.warn('Unexpected insights data format:', result);
         throw new Error('Invalid insights data format received');
       }
       
-      console.log(`Processing ${insightsData.length} insights`);
+      console.log(`Processing ${insightsData.length} insights with total ${totalAnomaliesCount} anomalies`);
       setInsightsData(insightsData);
+      setTotalAnomalies(totalAnomaliesCount);
+      setTotalImpact(totalImpactValue);
       
       // If no insights data is returned, fallback to mock data
       if (!insightsData || insightsData.length === 0) {
@@ -122,7 +133,7 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
             severity: getSeverityByBucketId(insight.bucket_id),
             category: getCategoryByBucketId(insight.bucket_id),
             date: new Date().toISOString().split('T')[0],
-            impact: `$${(Math.random() * 10000 + 500).toFixed(2)}`,
+            impact: totalImpactValue ? `$${Math.abs(totalImpactValue).toLocaleString()}` : `$${(Math.random() * 10000 + 500).toFixed(2)}`,
             status: Math.random() > 0.8 ? 'resolved' : 'unresolved',
             bucket: `Bucket ${insight.bucket_id}: ${insight.bucket_description}`,
             anomalyCount: insight.anomaly_count,
@@ -133,11 +144,11 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
         });
         
         // Log the number of anomaly items being passed
-        console.log(`Passing ${anomalyItems.length} anomaly items to callback`);
+        console.log(`Passing ${anomalyItems.length} anomaly items with ${totalAnomaliesCount} total anomalies to callback`);
         onAnomalyInsightsReceived(anomalyItems);
       }
       
-      toast.success(`AI insights generated successfully! Found ${insightsData.length} insight categories.`);
+      toast.success(`AI insights generated successfully! Found ${insightsData.length} insight categories with ${totalAnomaliesCount} anomalies.`);
     } catch (error) {
       console.error('Insights generation error:', error);
       
@@ -160,6 +171,8 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
   return {
     isGeneratingInsights,
     generateInsights,
-    insightsData
+    insightsData,
+    totalAnomalies,
+    totalImpact
   };
 };

@@ -12,10 +12,19 @@ import { AnomalyItem } from '@/types/anomaly';
 const InsightsPanel = () => {
   const [insights, setInsights] = useState(mockInsights);
   const [selectedInsight, setSelectedInsight] = useState(mockInsights[0]);
+  const [totalAnomalies, setTotalAnomalies] = useState(0);
   
-  const { isGeneratingInsights, generateInsights } = useAnomalyInsights({
+  const { 
+    isGeneratingInsights, 
+    generateInsights, 
+    totalAnomalies: apiTotalAnomalies 
+  } = useAnomalyInsights({
     onAnomalyInsightsReceived: (anomalies: AnomalyItem[]) => {
       console.log(`Received ${anomalies.length} anomaly insights for display`);
+      
+      // Calculate total anomalies from the anomaly items
+      const totalCount = anomalies.reduce((total, anomaly) => total + (anomaly.anomalyCount || 0), 0);
+      setTotalAnomalies(totalCount);
       
       // Convert AnomalyItems to the insight format needed for display
       const formattedInsights = anomalies.map(anomaly => ({
@@ -40,9 +49,9 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
         `.trim()
       }));
       
-      setInsights(formattedInsights);
-      // Set the first insight as selected if available
       if (formattedInsights.length > 0) {
+        setInsights(formattedInsights);
+        // Set the first insight as selected if available
         setSelectedInsight(formattedInsights[0]);
       }
     }
@@ -102,6 +111,7 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
             onSelectInsight={setSelectedInsight}
             onGenerateMore={handleGenerateMoreInsights}
             loading={isGeneratingInsights}
+            totalAnomalies={totalAnomalies}
           />
         </div>
 

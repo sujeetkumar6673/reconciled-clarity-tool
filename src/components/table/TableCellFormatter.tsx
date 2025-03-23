@@ -7,13 +7,24 @@ interface TableCellFormatterProps {
   columnName: string;
 }
 
+// Enhanced column name normalization for deduplication
+export const normalizeColumnName = (columnName: string): string => {
+  // Handle column names like "Column Name [1]" or "Column Name (1)" or duplicates with spaces
+  return columnName
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '')
+    .replace(/\[\d+\]$/g, '')  // Remove [1], [2] etc. at the end
+    .replace(/\(\d+\)$/g, '')  // Remove (1), (2) etc. at the end
+    .trim();
+};
+
 export const TableCellFormatter: React.FC<TableCellFormatterProps> = ({ value, columnName }) => {
   if (value === undefined || value === null) {
     return null;
   }
   
   // Enhanced normalization for column names to be more thorough with case and whitespace
-  const normalizedColumnName = columnName.toLowerCase().replace(/[\s_-]+/g, '');
+  const normalizedColumnName = normalizeColumnName(columnName);
   
   // Handle status fields (any column ending with 'status' or exactly 'status')
   if ((normalizedColumnName === 'status' || normalizedColumnName.endsWith('status')) && typeof value === 'string') {
@@ -120,4 +131,28 @@ export const getDataTypeDisplayValue = (dataType: string) => {
   
   // If it doesn't match any of our known types, capitalize first letter
   return dataType.charAt(0).toUpperCase() + dataType.slice(1);
+};
+
+// Add a utility function to deduplicate headers
+export const deduplicateHeaders = (headers: string[]): string[] => {
+  const uniqueHeaders = new Map<string, number>();
+  
+  return headers.map(header => {
+    const normalizedHeader = normalizeColumnName(header);
+    
+    // If this normalized header already exists, add a counter
+    if (uniqueHeaders.has(normalizedHeader)) {
+      const count = uniqueHeaders.get(normalizedHeader)! + 1;
+      uniqueHeaders.set(normalizedHeader, count);
+      // Skip adding the counter if this is a duplicate that already has a counter
+      if (!/\[\d+\]$/.test(header) && !/\(\d+\)$/.test(header)) {
+        return `${header} [${count}]`;
+      }
+      return header;
+    }
+    
+    // First time seeing this header
+    uniqueHeaders.set(normalizedHeader, 0);
+    return header;
+  });
 };
