@@ -2,12 +2,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { toast } from 'sonner';
 import { parseCSV, DynamicColumnData } from '@/lib/csv-parser';
-
-// API base URL configuration
-const API_BASE_URL = 'http://127.0.0.1:8000';
-
-// Timeout configuration for large file uploads (3 minutes)
-const UPLOAD_TIMEOUT = 180000;
+import { uploadFileToAPI } from '@/utils/apiUtils';
 
 interface FileUploadContextType {
   currentFiles: File[];
@@ -32,6 +27,7 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
   const [isUploading, setIsUploading] = useState(false);
   const [step, setStep] = useState<'current' | 'historical' | 'both'>('current');
 
+  // Handle file addition with validation
   const addFiles = (files: File[], fileType: 'current' | 'historical') => {
     const validFiles = files.filter(file => {
       const fileType = file.name.split('.').pop()?.toLowerCase();
@@ -60,6 +56,7 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
     }
   };
 
+  // Handle file removal
   const removeFile = (index: number, fileType: 'current' | 'historical') => {
     if (fileType === 'current') {
       setCurrentFiles(prev => prev.filter((_, i) => i !== index));
@@ -74,61 +71,7 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
     }
   };
 
-  const uploadFileToAPI = async (file: File, endpoint: string): Promise<boolean> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT);
-    
-    try {
-      console.log(`Uploading file ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB) to ${endpoint}`);
-      
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-        // Recommended for large file uploads
-        headers: {
-          // Don't set content-type header, it will be set automatically with boundary
-        }
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        let errorMessage = 'Unknown error occurred';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorMessage;
-        } catch (e) {
-          errorMessage = `Server error (${response.status}): ${response.statusText}`;
-        }
-        console.error(`Error sending data to ${endpoint}:`, errorMessage);
-        throw new Error(errorMessage);
-      }
-      
-      const result = await response.json();
-      console.log(`Successfully sent data to ${endpoint}:`, result);
-      return true;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      
-      if (error.name === 'AbortError') {
-        console.error(`Request timeout for ${file.name}`);
-        throw new Error(`Upload timeout for ${file.name}. The file may be too large or the server is unresponsive.`);
-      }
-      
-      console.error(`API error with ${endpoint}:`, error);
-      // Check if the error is a network error (like CORS, server down, etc.)
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error(`Network error: Cannot connect to the server at ${API_BASE_URL}. Please check if the API server is running.`);
-      }
-      
-      throw error;
-    }
-  };
-
+  // Process and upload files
   const processFiles = async () => {
     if (currentFiles.length === 0 && historicalFiles.length === 0) {
       toast.error('Please select files to upload');
@@ -144,74 +87,12 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
       
       // Process current files
       for (const file of currentFiles) {
-        if (file.name.toLowerCase().endsWith('.csv')) {
-          try {
-            // Show file processing notification
-            const fileToastId = toast.loading(`Processing ${file.name}...`);
-            
-            // Using a try-catch block specifically for the API call
-            try {
-              // Send the file to the backend API
-              await uploadFileToAPI(file, '/upload/realtime');
-              toast.success(`Server upload successful: ${file.name}`, { id: fileToastId });
-            } catch (uploadError) {
-              toast.error(`Server upload failed: ${uploadError.message}`, { id: fileToastId });
-              console.error('Error uploading to API:', uploadError);
-              
-              // Continue with local parsing even if API upload fails
-              toast.loading(`Attempting local parsing of ${file.name}...`, { id: fileToastId });
-            }
-            
-            // Proceed with local parsing for the UI regardless of API success
-            const text = await file.text();
-            const firstLine = text.split('\n')[0];
-            const headers = firstLine.split(',').map(h => h.trim());
-            allHeaders = [...new Set([...allHeaders, ...headers])];
-            const parsedData = parseCSV(text, file.name, 'current');
-            currentData.push(...parsedData);
-            
-            toast.success(`Parsed ${parsedData.length} records from ${file.name}`, { id: fileToastId });
-          } catch (error) {
-            console.error('Error processing current file:', error);
-            toast.error(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          }
-        }
+        await processFile(file, 'current', currentData, allHeaders);
       }
       
       // Process historical files
       for (const file of historicalFiles) {
-        if (file.name.toLowerCase().endsWith('.csv')) {
-          try {
-            // Show file processing notification
-            const fileToastId = toast.loading(`Processing ${file.name}...`);
-            
-            // Using a try-catch block specifically for the API call
-            try {
-              // Send the file to the backend API
-              await uploadFileToAPI(file, '/upload/historical');
-              toast.success(`Server upload successful: ${file.name}`, { id: fileToastId });
-            } catch (uploadError) {
-              toast.error(`Server upload failed: ${uploadError.message}`, { id: fileToastId });
-              console.error('Error uploading to API:', uploadError);
-              
-              // Continue with local parsing even if API upload fails
-              toast.loading(`Attempting local parsing of ${file.name}...`, { id: fileToastId });
-            }
-            
-            // Proceed with local parsing for the UI regardless of API success
-            const text = await file.text();
-            const firstLine = text.split('\n')[0];
-            const headers = firstLine.split(',').map(h => h.trim());
-            allHeaders = [...new Set([...allHeaders, ...headers])];
-            const parsedData = parseCSV(text, file.name, 'historical');
-            historicalData.push(...parsedData);
-            
-            toast.success(`Parsed ${parsedData.length} records from ${file.name}`, { id: fileToastId });
-          } catch (error) {
-            console.error('Error processing historical file:', error);
-            toast.error(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          }
-        }
+        await processFile(file, 'historical', historicalData, allHeaders);
       }
 
       if (currentData.length === 0 && historicalData.length === 0) {
@@ -232,6 +113,43 @@ export const FileUploadProvider: React.FC<FileUploadProviderProps> = ({ children
       setCurrentFiles([]);
       setHistoricalFiles([]);
       setStep('current');
+    }
+  };
+
+  // Helper function to process a single file
+  const processFile = async (file: File, dataType: 'current' | 'historical', dataArray: DynamicColumnData[], allHeaders: string[]) => {
+    if (file.name.toLowerCase().endsWith('.csv')) {
+      try {
+        // Show file processing notification
+        const fileToastId = toast.loading(`Processing ${file.name}...`);
+        
+        // Using a try-catch block specifically for the API call
+        try {
+          // Send the file to the backend API
+          const endpoint = dataType === 'current' ? '/upload/realtime' : '/upload/historical';
+          await uploadFileToAPI(file, endpoint);
+          toast.success(`Server upload successful: ${file.name}`, { id: fileToastId });
+        } catch (uploadError) {
+          toast.error(`Server upload failed: ${uploadError.message}`, { id: fileToastId });
+          console.error('Error uploading to API:', uploadError);
+          
+          // Continue with local parsing even if API upload fails
+          toast.loading(`Attempting local parsing of ${file.name}...`, { id: fileToastId });
+        }
+        
+        // Proceed with local parsing for the UI regardless of API success
+        const text = await file.text();
+        const firstLine = text.split('\n')[0];
+        const headers = firstLine.split(',').map(h => h.trim());
+        allHeaders.push(...headers.filter(h => !allHeaders.includes(h)));
+        const parsedData = parseCSV(text, file.name, dataType);
+        dataArray.push(...parsedData);
+        
+        toast.success(`Parsed ${parsedData.length} records from ${file.name}`, { id: fileToastId });
+      } catch (error) {
+        console.error(`Error processing ${dataType} file:`, error);
+        toast.error(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   };
 
