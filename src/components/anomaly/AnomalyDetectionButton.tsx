@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Download, Sparkles } from 'lucide-react';
+import { AlertTriangle, Download, Sparkles, Brain } from 'lucide-react';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { Progress } from '@/components/ui/progress';
