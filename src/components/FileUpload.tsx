@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FileUp, History, File, XCircle, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,6 +65,31 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
     }
   };
 
+  const uploadFileToAPI = async (file: File, endpoint: string): Promise<boolean> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error(`Error sending data to ${endpoint}:`, errorData);
+        throw new Error(errorData.detail || 'Unknown error occurred');
+      }
+      
+      const result = await response.json();
+      console.log(`Successfully sent data to ${endpoint}:`, result);
+      return true;
+    } catch (error) {
+      console.error(`API error with ${endpoint}:`, error);
+      throw error;
+    }
+  };
+
   const handleUpload = async () => {
     if (currentFiles.length === 0 && historicalFiles.length === 0) {
       toast.error('Please select files to upload');
@@ -82,73 +106,42 @@ const FileUpload: React.FC<FileUploadProps> = ({ onDataProcessed }) => {
       // Process current files
       for (const file of currentFiles) {
         if (file.name.toLowerCase().endsWith('.csv')) {
-          const text = await file.text();
-          
-          const firstLine = text.split('\n')[0];
-          const headers = firstLine.split(',').map(h => h.trim());
-          
-          allHeaders = [...new Set([...allHeaders, ...headers])];
-          
-          const parsedData = parseCSV(text, file.name, 'current');
-          currentData.push(...parsedData);
+          try {
+            // Send the file to the backend API
+            await uploadFileToAPI(file, '/upload/realtime');
+            
+            // Also parse locally for the UI
+            const text = await file.text();
+            const firstLine = text.split('\n')[0];
+            const headers = firstLine.split(',').map(h => h.trim());
+            allHeaders = [...new Set([...allHeaders, ...headers])];
+            const parsedData = parseCSV(text, file.name, 'current');
+            currentData.push(...parsedData);
+          } catch (error) {
+            console.error('Error processing current file:', error);
+            toast.error(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
         }
       }
       
       // Process historical files
       for (const file of historicalFiles) {
         if (file.name.toLowerCase().endsWith('.csv')) {
-          const text = await file.text();
-          
-          const firstLine = text.split('\n')[0];
-          const headers = firstLine.split(',').map(h => h.trim());
-          
-          allHeaders = [...new Set([...allHeaders, ...headers])];
-          
-          const parsedData = parseCSV(text, file.name, 'historical');
-          historicalData.push(...parsedData);
-        }
-      }
-
-      // Call APIs to process the data
-      if (currentData.length > 0) {
-        try {
-          const realtimeResponse = await fetch(`${API_BASE_URL}/upload/realtime`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ data: currentData })
-          });
-          
-          if (!realtimeResponse.ok) {
-            console.error('Error sending realtime data to API');
-          } else {
-            console.log('Successfully sent realtime data to API');
+          try {
+            // Send the file to the backend API
+            await uploadFileToAPI(file, '/upload/historical');
+            
+            // Also parse locally for the UI
+            const text = await file.text();
+            const firstLine = text.split('\n')[0];
+            const headers = firstLine.split(',').map(h => h.trim());
+            allHeaders = [...new Set([...allHeaders, ...headers])];
+            const parsedData = parseCSV(text, file.name, 'historical');
+            historicalData.push(...parsedData);
+          } catch (error) {
+            console.error('Error processing historical file:', error);
+            toast.error(`Error processing ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
           }
-        } catch (error) {
-          console.error('API error:', error);
-          toast.error('Error sending realtime data to API. Processing locally only.');
-        }
-      }
-
-      if (historicalData.length > 0) {
-        try {
-          const historicalResponse = await fetch(`${API_BASE_URL}/upload/historical`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ data: historicalData })
-          });
-          
-          if (!historicalResponse.ok) {
-            console.error('Error sending historical data to API');
-          } else {
-            console.log('Successfully sent historical data to API');
-          }
-        } catch (error) {
-          console.error('API error:', error);
-          toast.error('Error sending historical data to API. Processing locally only.');
         }
       }
 
