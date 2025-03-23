@@ -1,15 +1,52 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lightbulb, MessageSquare, Brain, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockInsights, suggestedActions } from '@/data/insightsData';
 import InsightsList from './insights/InsightsList';
 import InsightContent from './insights/InsightContent';
 import ActionsList from './insights/ActionsList';
+import { useAnomalyInsights } from '@/hooks/useAnomalyInsights';
+import { AnomalyItem } from '@/types/anomaly';
 
 const InsightsPanel = () => {
+  const [insights, setInsights] = useState(mockInsights);
   const [selectedInsight, setSelectedInsight] = useState(mockInsights[0]);
-  const [loading, setLoading] = useState(false);
+  
+  const { isGeneratingInsights, generateInsights } = useAnomalyInsights({
+    onAnomalyInsightsReceived: (anomalies: AnomalyItem[]) => {
+      console.log(`Received ${anomalies.length} anomaly insights for display`);
+      
+      // Convert AnomalyItems to the insight format needed for display
+      const formattedInsights = anomalies.map(anomaly => ({
+        id: anomaly.id,
+        title: anomaly.title,
+        description: anomaly.description,
+        category: anomaly.category,
+        content: `
+Bucket ID: ${anomaly.bucket?.split(':')[0].replace('Bucket ', '')}
+Anomaly Count: ${anomaly.anomalyCount || 0}
+Severity: ${anomaly.severity}
+Impact: ${anomaly.impact}
+
+Root Cause:
+${anomaly.rootCauses?.join('\n') || 'No root cause analysis available'}
+
+Suggested Actions:
+${anomaly.suggestedActions?.join('\n') || 'No suggested actions available'}
+
+Sample Companies:
+${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample companies available'}
+        `.trim()
+      }));
+      
+      setInsights(formattedInsights);
+      // Set the first insight as selected if available
+      if (formattedInsights.length > 0) {
+        setSelectedInsight(formattedInsights[0]);
+      }
+    }
+  });
 
   const handleCopyInsight = () => {
     navigator.clipboard.writeText(selectedInsight.content);
@@ -17,12 +54,7 @@ const InsightsPanel = () => {
   };
 
   const handleGenerateMoreInsights = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      toast.success('New insights generated');
-    }, 2000);
+    generateInsights();
   };
 
   const handleExecuteAction = (actionType: string) => {
@@ -41,6 +73,12 @@ const InsightsPanel = () => {
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'compliance':
         return <CheckCircle className="h-5 w-5 text-orange-500" />;
+      case 'balance':
+      case 'missing':
+      case 'timing':
+      case 'duplicate':
+      case 'unclassified':
+        return <MessageSquare className="h-5 w-5 text-blue-500" />;
       default:
         return <MessageSquare className="h-5 w-5 text-blue-500" />;
     }
@@ -59,22 +97,24 @@ const InsightsPanel = () => {
         {/* Left column - Insight list */}
         <div className="lg:col-span-1 animate-fade-in animate-delay-100">
           <InsightsList 
-            insights={mockInsights}
-            selectedInsightId={selectedInsight.id}
+            insights={insights}
+            selectedInsightId={selectedInsight?.id}
             onSelectInsight={setSelectedInsight}
             onGenerateMore={handleGenerateMoreInsights}
-            loading={loading}
+            loading={isGeneratingInsights}
           />
         </div>
 
         {/* Right column - Selected insight + actions */}
         <div className="lg:col-span-2 space-y-6 animate-fade-in animate-delay-200">
           {/* Selected insight */}
-          <InsightContent
-            insight={selectedInsight}
-            renderInsightIcon={renderInsightIcon}
-            onCopy={handleCopyInsight}
-          />
+          {selectedInsight && (
+            <InsightContent
+              insight={selectedInsight}
+              renderInsightIcon={renderInsightIcon}
+              onCopy={handleCopyInsight}
+            />
+          )}
 
           {/* Suggested actions */}
           <ActionsList 

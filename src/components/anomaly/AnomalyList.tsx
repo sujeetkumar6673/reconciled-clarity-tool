@@ -17,6 +17,11 @@ const AnomalyList: React.FC<AnomalyListProps> = ({
   if (filteredAnomalies.length > 0) {
     return (
       <div className="space-y-4">
+        <div className="text-sm text-muted-foreground mb-2">
+          Showing {filteredAnomalies.length} anomaly {filteredAnomalies.length === 1 ? 'category' : 'categories'} with a total of {
+            filteredAnomalies.reduce((total, anomaly) => total + (anomaly.anomalyCount || 0), 0)
+          } detected anomalies
+        </div>
         {filteredAnomalies.map(anomaly => (
           <AnomalyCard 
             key={anomaly.id}

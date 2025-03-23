@@ -11,7 +11,7 @@ interface InsightsListProps {
     title: string;
     description: string;
     category: string;
-    content: string;
+    content?: string;
   }>;
   selectedInsightId: number;
   onSelectInsight: (insight: any) => void;
@@ -34,11 +34,13 @@ const InsightsList: React.FC<InsightsListProps> = ({
           AI Insights
         </CardTitle>
         <CardDescription>
-          Select an insight to view details
+          {insights.length > 0 
+            ? `Showing ${insights.length} insights - select one to view details`
+            : 'No insights available yet - generate some to get started'}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="space-y-2 px-6">
+        <div className="space-y-2 px-6 max-h-[500px] overflow-y-auto">
           {insights.map((insight) => (
             <InsightItem
               key={insight.id}
@@ -47,6 +49,11 @@ const InsightsList: React.FC<InsightsListProps> = ({
               onSelect={() => onSelectInsight(insight)}
             />
           ))}
+          {insights.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              No insights available. Click the button below to generate insights.
+            </div>
+          )}
         </div>
       </CardContent>
       <CardFooter className="flex justify-center pt-4">
@@ -64,7 +71,7 @@ const InsightsList: React.FC<InsightsListProps> = ({
           ) : (
             <>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Generate More Insights
+              {insights.length > 0 ? 'Generate More Insights' : 'Generate Insights'}
             </>
           )}
         </Button>

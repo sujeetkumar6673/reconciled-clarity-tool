@@ -88,8 +88,21 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       const result = await response.json();
       console.log('AI insights response:', result);
       
-      // Process the insights data
-      const insightsData = result.insights || [];
+      // Process the insights data - handle both array format and nested format
+      let insightsData: InsightResponse[] = [];
+      
+      if (Array.isArray(result)) {
+        // Direct array of insights
+        insightsData = result;
+      } else if (result.insights && Array.isArray(result.insights)) {
+        // Nested insights object
+        insightsData = result.insights;
+      } else {
+        console.warn('Unexpected insights data format:', result);
+        throw new Error('Invalid insights data format received');
+      }
+      
+      console.log(`Processing ${insightsData.length} insights`);
       setInsightsData(insightsData);
       
       // If no insights data is returned, fallback to mock data
@@ -119,10 +132,12 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
           };
         });
         
+        // Log the number of anomaly items being passed
+        console.log(`Passing ${anomalyItems.length} anomaly items to callback`);
         onAnomalyInsightsReceived(anomalyItems);
       }
       
-      toast.success('AI insights generated successfully!');
+      toast.success(`AI insights generated successfully! Found ${insightsData.length} insight categories.`);
     } catch (error) {
       console.error('Insights generation error:', error);
       
