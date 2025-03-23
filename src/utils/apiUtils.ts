@@ -1,8 +1,8 @@
 // API base URL configuration (keep in sync with other files)
 export const API_BASE_URL = 'http://127.0.0.1:8000';
 
-// Timeout configuration for large file uploads (3 minutes)
-export const UPLOAD_TIMEOUT = 180000;
+// Timeout configuration for large file uploads (5 minutes - increased from 3 minutes)
+export const UPLOAD_TIMEOUT = 300000;
 
 // Upload file to API with timeout and error handling
 export const uploadFileToAPI = async (file: File, endpoint: string): Promise<boolean> => {

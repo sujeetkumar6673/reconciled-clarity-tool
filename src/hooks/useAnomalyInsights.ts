@@ -53,9 +53,9 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
     try {
       toast.info('Generating detailed AI insights...');
       
-      // Add a timeout to the fetch to prevent hanging requests
+      // Increase timeout to prevent hanging requests - 60 seconds
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout (increased from 20)
       
       // Call the real API endpoint with error handling
       console.log('Fetching insights from API:', `${API_BASE_URL}/insights`);
@@ -92,23 +92,35 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       const result = await response.json();
       console.log('AI insights response:', result);
       
-      // Process the insights data with improved format handling
+      // Handle the API response structure correctly
+      if (!result) {
+        throw new Error('Empty response from insights API');
+      }
+      
+      // Initialize variables for processing the response
       let insightsArray: InsightResponse[] = [];
       let totalAnomaliesCount = 0;
       let totalImpactValue = 0;
       
-      // Handle the new API response format with total_anomalies, total_impact, and insights array
-      if (result.insights && Array.isArray(result.insights)) {
-        console.log('Using structured format with insights array');
+      // Check if result is an array (old API format) or object with insights property (new format)
+      if (Array.isArray(result)) {
+        // Old format - direct array of insights
+        console.log('Processing direct array format');
+        insightsArray = result;
+        totalAnomaliesCount = result.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
+      } else if (result.insights && Array.isArray(result.insights)) {
+        // New format with total_anomalies, total_impact, and insights array
+        console.log('Processing structured format with insights array');
         insightsArray = result.insights;
         totalAnomaliesCount = result.total_anomalies || 0;
         totalImpactValue = result.total_impact || 0;
-      } else if (Array.isArray(result)) {
-        // Handle backward compatibility for direct array format
-        console.log('Using direct array format');
-        insightsArray = result;
-        totalAnomaliesCount = result.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
+      } else if (result.message) {
+        // Handle case where only a message is returned
+        console.log('Response contains only a message:', result.message);
+        toast.info(result.message);
+        throw new Error('No insights data available in the response');
       } else {
+        // Unknown format - log it for debugging
         console.warn('Unexpected insights data format:', result);
         throw new Error('Invalid insights data format received');
       }
