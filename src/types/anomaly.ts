@@ -11,6 +11,14 @@ export interface InsightResponse {
   recommendation: string;
 }
 
+// API response with total numbers and insights array
+export interface InsightsApiResponse {
+  total_anomalies: number;
+  total_impact: number;
+  insights: InsightResponse[];
+  message?: string;
+}
+
 // Sample record type for anomaly data
 export interface AnomalySampleRecord {
   company?: string;

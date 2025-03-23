@@ -14,9 +14,9 @@ const AnomalyList: React.FC<AnomalyListProps> = ({
   getCategoryIcon, 
   getSeverityColor 
 }) => {
-  // Calculate total anomalies from all categories - handle undefined anomalyCount
+  // Calculate total anomalies from all categories - handle undefined anomalyCount properly
   const totalAnomalyCount = filteredAnomalies.reduce(
-    (total, anomaly) => total + (anomaly.anomalyCount || 0), 
+    (total, anomaly) => total + (typeof anomaly.anomalyCount === 'number' ? anomaly.anomalyCount : 0), 
     0
   );
   

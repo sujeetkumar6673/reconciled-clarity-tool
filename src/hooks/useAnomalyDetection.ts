@@ -51,20 +51,30 @@ export const useAnomalyDetection = ({
 
   // Enhanced deduplication function to handle various cases and transformations
   const deduplicateHeaders = (headers: string[]): string[] => {
-    const seen = new Map<string, string>();
-    return headers.filter(header => {
-      // Create a fully normalized version for comparison (lowercase, no spaces)
-      const normalized = header.toLowerCase().replace(/\s+/g, '');
+    const uniqueHeaders: string[] = [];
+    const seen = new Set<string>();
+    
+    // First pass: normalize and check for exact duplicates
+    for (const header of headers) {
+      if (!header || header.trim() === '') {
+        // Skip empty headers
+        continue;
+      }
       
-      // If we've seen this normalized form before, it's a duplicate
-      if (seen.has(normalized)) {
-        return false;
+      // Create a fully normalized version for comparison (lowercase, no spaces or special chars)
+      const normalized = header.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      if (normalized === '' || seen.has(normalized)) {
+        // Skip if normalized is empty or we've seen it before
+        continue;
       }
       
       // Mark this normalized form as seen and keep the original header
-      seen.set(normalized, header);
-      return true;
-    });
+      seen.add(normalized);
+      uniqueHeaders.push(header);
+    }
+    
+    return uniqueHeaders;
   };
 
   const detectAnomalies = async () => {
@@ -104,7 +114,15 @@ export const useAnomalyDetection = ({
               const deduplicatedHeaders = deduplicateHeaders(headers);
               console.log('Original headers:', headers);
               console.log('Deduplicated headers:', deduplicatedHeaders);
-              onAnomalyDataReceived(data, deduplicatedHeaders);
+              
+              // Filter out any rows with all empty values
+              const filteredData = data.filter(row => 
+                Object.values(row).some(value => 
+                  value !== null && value !== undefined && value !== ''
+                )
+              );
+              
+              onAnomalyDataReceived(filteredData, deduplicatedHeaders);
             }
           }, 
           onAnomalyInsightsReceived
@@ -127,7 +145,15 @@ export const useAnomalyDetection = ({
               const deduplicatedHeaders = deduplicateHeaders(headers);
               console.log('Original headers (mock):', headers);
               console.log('Deduplicated headers (mock):', deduplicatedHeaders);
-              onAnomalyDataReceived(data, deduplicatedHeaders);
+              
+              // Filter out any rows with all empty values
+              const filteredData = data.filter(row => 
+                Object.values(row).some(value => 
+                  value !== null && value !== undefined && value !== ''
+                )
+              );
+              
+              onAnomalyDataReceived(filteredData, deduplicatedHeaders);
             }
           }, 
           onAnomalyInsightsReceived
@@ -147,7 +173,15 @@ export const useAnomalyDetection = ({
             const deduplicatedHeaders = deduplicateHeaders(headers);
             console.log('Original headers (error fallback):', headers);
             console.log('Deduplicated headers (error fallback):', deduplicatedHeaders);
-            onAnomalyDataReceived(data, deduplicatedHeaders);
+            
+            // Filter out any rows with all empty values
+            const filteredData = data.filter(row => 
+              Object.values(row).some(value => 
+                value !== null && value !== undefined && value !== ''
+              )
+            );
+            
+            onAnomalyDataReceived(filteredData, deduplicatedHeaders);
           }
         }, 
         onAnomalyInsightsReceived

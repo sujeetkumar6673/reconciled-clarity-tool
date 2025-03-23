@@ -22,9 +22,8 @@ const InsightsPanel = () => {
     onAnomalyInsightsReceived: (anomalies: AnomalyItem[]) => {
       console.log(`Received ${anomalies.length} anomaly insights for display`);
       
-      // Calculate total anomalies from the anomaly items
-      const totalCount = anomalies.reduce((total, anomaly) => total + (anomaly.anomalyCount || 0), 0);
-      setTotalAnomalies(totalCount);
+      // Use the total from the API response instead of calculating it
+      setTotalAnomalies(apiTotalAnomalies);
       
       // Convert AnomalyItems to the insight format needed for display
       const formattedInsights = anomalies.map(anomaly => ({
@@ -56,6 +55,13 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
       }
     }
   });
+
+  // Update total anomalies whenever apiTotalAnomalies changes
+  useEffect(() => {
+    if (apiTotalAnomalies > 0) {
+      setTotalAnomalies(apiTotalAnomalies);
+    }
+  }, [apiTotalAnomalies]);
 
   const handleCopyInsight = () => {
     navigator.clipboard.writeText(selectedInsight.content);

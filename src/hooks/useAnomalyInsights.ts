@@ -92,40 +92,42 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       const result = await response.json();
       console.log('AI insights response:', result);
       
-      // Process the insights data with new format handling
-      let insightsData: InsightResponse[] = [];
+      // Process the insights data with improved format handling
+      let insightsArray: InsightResponse[] = [];
       let totalAnomaliesCount = 0;
       let totalImpactValue = 0;
       
-      if (Array.isArray(result)) {
-        // Direct array of insights
-        insightsData = result;
-        totalAnomaliesCount = result.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
-      } else if (result.insights && Array.isArray(result.insights)) {
-        // New structured format with insights array and total_anomalies
-        insightsData = result.insights;
-        totalAnomaliesCount = result.total_anomalies || insightsData.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
+      // Handle the new API response format with total_anomalies, total_impact, and insights array
+      if (result.insights && Array.isArray(result.insights)) {
+        console.log('Using structured format with insights array');
+        insightsArray = result.insights;
+        totalAnomaliesCount = result.total_anomalies || 0;
         totalImpactValue = result.total_impact || 0;
+      } else if (Array.isArray(result)) {
+        // Handle backward compatibility for direct array format
+        console.log('Using direct array format');
+        insightsArray = result;
+        totalAnomaliesCount = result.reduce((total, insight) => total + (insight.anomaly_count || 0), 0);
       } else {
         console.warn('Unexpected insights data format:', result);
         throw new Error('Invalid insights data format received');
       }
       
-      console.log(`Processing ${insightsData.length} insights with total ${totalAnomaliesCount} anomalies`);
-      setInsightsData(insightsData);
+      console.log(`Processing ${insightsArray.length} insights with total ${totalAnomaliesCount} anomalies`);
+      setInsightsData(insightsArray);
       setTotalAnomalies(totalAnomaliesCount);
       setTotalImpact(totalImpactValue);
       
       // If no insights data is returned, fallback to mock data
-      if (!insightsData || insightsData.length === 0) {
+      if (!insightsArray || insightsArray.length === 0) {
         console.warn('No insights data returned from API, using fallback data');
         fallbackToMockInsights();
         return;
       }
       
       // If onAnomalyInsightsReceived is provided, convert the insights data to AnomalyItem format
-      if (onAnomalyInsightsReceived && insightsData.length > 0) {
-        const anomalyItems: AnomalyItem[] = insightsData.map((insight: InsightResponse, index: number) => {
+      if (onAnomalyInsightsReceived && insightsArray.length > 0) {
+        const anomalyItems: AnomalyItem[] = insightsArray.map((insight, index) => {
           return {
             id: index + 1,
             title: insight.bucket_description,
@@ -148,7 +150,7 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
         onAnomalyInsightsReceived(anomalyItems);
       }
       
-      toast.success(`AI insights generated successfully! Found ${insightsData.length} insight categories with ${totalAnomaliesCount} anomalies.`);
+      toast.success(`AI insights generated successfully! Found ${insightsArray.length} insight categories with ${totalAnomaliesCount} anomalies.`);
     } catch (error) {
       console.error('Insights generation error:', error);
       
