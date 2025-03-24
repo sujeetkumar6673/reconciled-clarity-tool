@@ -194,8 +194,6 @@ const AnomalySection = () => {
     detectAnomalies
   } = useAnomalyDetection({
     onAnomalyDataReceived: (data, headers) => {
-      console.log('Received anomaly data:', data);
-      
       const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
         return {
           id: Number(item.id?.replace('anomaly-', '')) || index,

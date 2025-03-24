@@ -137,16 +137,18 @@ export const useAnomalyDetection = ({
             
             // Extract data from the API response
             if (result) {
-              // Set total anomalies from the API response
+              // Important: Update totalAnomaliesCount SYNCHRONOUSLY
               if (typeof result.anomaly_count === 'number') {
                 console.log(`Received anomaly_count: ${result.anomaly_count}`);
-                setTotalAnomaliesCount(result.anomaly_count);
+                const anomalyCount = result.anomaly_count;
+                setTotalAnomaliesCount(anomalyCount);
               }
               
-              // Set total impact from the API response
+              // Important: Update totalImpactValue SYNCHRONOUSLY 
               if (typeof result.total_impact === 'number') {
                 console.log(`Received total_impact: ${result.total_impact}`);
-                setTotalImpactValue(result.total_impact);
+                const impactValue = result.total_impact;
+                setTotalImpactValue(impactValue);
               }
               
               if (result.data && Array.isArray(result.data)) {

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertTriangle, DollarSign, Clock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
@@ -19,7 +19,9 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   totalCount
 }) => {
   // Debug log to see what values are being passed to the component
-  console.log('AnomalySummaryCards renders with props:', { totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount });
+  useEffect(() => {
+    console.log('AnomalySummaryCards renders with props:', { totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount });
+  }, [totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount]);
 
   return (
     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-fade-in">
