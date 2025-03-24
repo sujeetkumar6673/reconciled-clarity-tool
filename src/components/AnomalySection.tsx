@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -188,19 +187,12 @@ const AnomalySection = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
-  const [renderCounter, setRenderCounter] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   
-  // Localized state for anomaly stats to ensure UI updates
-  const [anomalyStats, setAnomalyStats] = useState({
-    anomalyCount: 0,
-    impactValue: 0,
-    resolvedCount: 0,
-    totalCount: 5
-  });
-
-  // Callback to update anomaly data received from detection
   const handleAnomalyDataReceived = useCallback((data: DynamicColumnData[], headers: string[]) => {
-    console.log('handleAnomalyDataReceived called with data length:', data.length);
+    console.log('Anomaly data received with length:', data.length);
+    
+    if (data.length === 0) return;
     
     const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
       return {
@@ -231,8 +223,7 @@ const AnomalySection = () => {
     });
     
     setDisplayData(transformedData);
-    // Force a re-render
-    setRenderCounter(prev => prev + 1);
+    setRefreshKey(prev => prev + 1);
   }, []);
 
   const { 
@@ -244,30 +235,9 @@ const AnomalySection = () => {
     onAnomalyDataReceived: handleAnomalyDataReceived
   });
 
-  // Update local state whenever the hook values change
   useEffect(() => {
-    console.log('Hook values changed:', { totalAnomaliesCount, totalImpactValue });
-    
-    // Only update if values are different to avoid redundant renders
-    if (totalAnomaliesCount !== anomalyStats.anomalyCount || 
-        totalImpactValue !== anomalyStats.impactValue) {
-      
-      setAnomalyStats(prev => ({
-        ...prev,
-        anomalyCount: totalAnomaliesCount,
-        impactValue: totalImpactValue
-      }));
-      
-      // Force re-render to ensure child components update
-      setRenderCounter(prev => prev + 1);
-      
-      console.log('Updated anomaly stats:', {
-        anomalyCount: totalAnomaliesCount,
-        impactValue: totalImpactValue,
-        renderCounter: renderCounter + 1
-      });
-    }
-  }, [totalAnomaliesCount, totalImpactValue, anomalyStats.anomalyCount, anomalyStats.impactValue, renderCounter]);
+    console.log('AnomalySection - Hook values updated:', { totalAnomaliesCount, totalImpactValue });
+  }, [totalAnomaliesCount, totalImpactValue]);
 
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
@@ -286,9 +256,8 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  // Format impact value for display
-  const formattedTotalImpact = anomalyStats.impactValue !== 0
-    ? `$${Math.abs(anomalyStats.impactValue).toLocaleString()}`
+  const formattedTotalImpact = totalImpactValue !== 0
+    ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00';
   
   const resolutionRate = anomaliesData.length > 0 
@@ -346,8 +315,8 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
-          key={`summary-cards-${renderCounter}`}
-          totalAnomalies={anomalyStats.anomalyCount}
+          key={`summary-cards-${refreshKey}-${totalAnomaliesCount}`}
+          totalAnomalies={totalAnomaliesCount}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
@@ -457,7 +426,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
-        <p>Debug: Anomaly Count: {anomalyStats.anomalyCount}, Impact: {anomalyStats.impactValue}, Render Key: {renderCounter}</p>
+        <p>Debug: Anomaly Count: {totalAnomaliesCount}, Impact: {totalImpactValue}, Render Key: {refreshKey}</p>
       </div>
     </div>
   );

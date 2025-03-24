@@ -18,19 +18,13 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   resolvedCount,
   totalCount
 }) => {
-  // Simple memo for debugging
-  React.useEffect(() => {
-    console.log('AnomalySummaryCards rendering with latest props:', { 
-      totalAnomalies, 
-      totalImpact, 
-      resolutionRate, 
-      resolvedCount, 
-      totalCount 
-    });
-  }, [totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount]);
-
+  // Log when the component renders with new props
+  console.log('AnomalySummaryCards rendering with props:', { 
+    totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount 
+  });
+  
   return (
-    <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-fade-in">
+    <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-fade-in" data-testid="anomaly-summary-cards">
       <Card className="glass-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center">
@@ -73,4 +67,5 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   );
 };
 
-export default React.memo(AnomalySummaryCards);
+// Remove React.memo to ensure updates always propagate
+export default AnomalySummaryCards;

@@ -51,24 +51,19 @@ export const useAnomalyDetection = ({
       }
     };
   }, [isDetecting, progress]);
-  
-  // Debug logging for state changes
-  useEffect(() => {
-    console.log("useAnomalyDetection - State updated:", { totalAnomaliesCount, totalImpactValue });
-  }, [totalAnomaliesCount, totalImpactValue]);
 
-  // Atomic state update function with increased timeout for stability
-  const setAnomalyStats = useCallback((count: number, impact: number) => {
+  // Clear and direct state update function
+  const updateAnomalyStats = useCallback((count: number, impact: number) => {
     console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
     
-    // Update both values at once to maintain consistency
+    // Update state directly
     setTotalAnomaliesCount(count);
     setTotalImpactValue(impact);
     
-    // Log state update after a delay to verify
+    // Log state update
     setTimeout(() => {
       console.log("Delayed state check:", { totalAnomaliesCount: count, totalImpactValue: impact });
-    }, 300); // Increased timeout
+    }, 500);
   }, []);
 
   const detectAnomalies = useCallback(async () => {
@@ -135,7 +130,7 @@ export const useAnomalyDetection = ({
                 console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
                 
                 // Use the atomic update function
-                setAnomalyStats(anomaliesCount, 0);
+                updateAnomalyStats(anomaliesCount, 0);
                 
                 // Call the data callback
                 setTimeout(() => {
@@ -167,10 +162,10 @@ export const useAnomalyDetection = ({
               console.log(`Received anomaly_count: ${count}`);
               console.log(`Received total_impact: ${impact}`);
               
-              // First update state with our atomic function
-              setAnomalyStats(count, impact);
+              // Direct state update
+              updateAnomalyStats(count, impact);
               
-              // Process data after state is updated with increased timeout
+              // Process data with increased timeout
               if (result.data && Array.isArray(result.data)) {
                 setTimeout(() => {
                   if (onAnomalyDataReceived) {
@@ -190,7 +185,7 @@ export const useAnomalyDetection = ({
                     
                     onAnomalyDataReceived(jsonData, headers);
                   }
-                }, 500); // Increased timeout
+                }, 300);
                 
                 setHasAnomalies(result.data.length > 0);
                 
@@ -224,7 +219,7 @@ export const useAnomalyDetection = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, setAnomalyStats]);
+  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, updateAnomalyStats]);
 
   const downloadFile = () => {
     if (resultFile) {
