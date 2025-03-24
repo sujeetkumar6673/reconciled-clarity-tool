@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,7 +43,8 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [renderKey, setRenderKey] = useState(0);
   
-  const { anomalyStats, anomalyData, updateAnomalyData, refreshStats } = useAnomalyContext();
+  // Correctly destructure the functions from context
+  const { anomalyStats, anomalyData, updateAnomalyData, updateAnomalyStats, refreshStats } = useAnomalyContext();
   const processedExternalStats = useRef(false);
   
   useEffect(() => {
