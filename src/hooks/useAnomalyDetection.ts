@@ -22,7 +22,8 @@ export const useAnomalyDetection = ({
     totalAnomaliesCount, 
     totalImpactValue, 
     hasAnomalies, 
-    updateAnomalyStats 
+    updateAnomalyStats,
+    refreshStats
   } = useAnomalyStats({
     onStatsChange: onAnomalyStatsChange
   });
@@ -35,7 +36,7 @@ export const useAnomalyDetection = ({
     onAnomalyInsightsReceived,
   });
 
-  // API client hook
+  // API client hook with enhanced callback handling
   const { callAnomalyDetectionApi } = useAnomalyApiClient({
     onAnomalyDataReceived,
     onAnomalyInsightsReceived,
@@ -66,6 +67,7 @@ export const useAnomalyDetection = ({
     hasAnomalies,
     insightsData,
     totalAnomaliesCount,
-    totalImpactValue
+    totalImpactValue,
+    refreshStats
   };
 };

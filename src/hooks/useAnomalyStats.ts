@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export interface UseAnomalyStatsProps {
   onStatsChange?: (count: number, impact: number) => void;
@@ -19,24 +20,32 @@ export const useAnomalyStats = ({ onStatsChange }: UseAnomalyStatsProps = {}) =>
     console.log('useAnomalyStats - State updated:', { totalAnomaliesCount, totalImpactValue });
   }, [totalAnomaliesCount, totalImpactValue]);
 
-  // Simplified state update function for anomaly stats
+  // Simplified state update function for anomaly stats with enhanced callback handling
   const updateAnomalyStats = useCallback((count: number, impact: number) => {
     console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
     
     // Force update with new values directly
-    const newStats = {
+    setStats({
       totalAnomaliesCount: count,
       totalImpactValue: impact,
       hasAnomalies: count > 0
-    };
+    });
     
-    setStats(newStats);
-    
-    // Always call the callback if provided to ensure parent components are updated
+    // Call the callback immediately with the new values
     if (onStatsChange) {
+      console.log('Calling onStatsChange with:', { count, impact });
+      onStatsChange(count, impact);
+      
+      // Also call it after a small delay to ensure it takes effect
       setTimeout(() => {
+        console.log('Delayed onStatsChange call with:', { count, impact });
         onStatsChange(count, impact);
-      }, 10);
+      }, 100);
+    }
+    
+    // Display toast notification for significant updates
+    if (count > 0) {
+      toast.success(`Updated anomaly statistics: ${count} anomalies found with impact of $${Math.abs(impact).toLocaleString()}`);
     }
     
     // Log state update with a delay to verify it took effect
@@ -45,10 +54,19 @@ export const useAnomalyStats = ({ onStatsChange }: UseAnomalyStatsProps = {}) =>
     }, 500);
   }, [onStatsChange]);
 
+  // Add a direct refresh method that components can call
+  const refreshStats = useCallback(() => {
+    console.log('Manually refreshing stats:', { totalAnomaliesCount, totalImpactValue });
+    if (onStatsChange) {
+      onStatsChange(totalAnomaliesCount, totalImpactValue);
+    }
+  }, [totalAnomaliesCount, totalImpactValue, onStatsChange]);
+
   return {
     totalAnomaliesCount,
     totalImpactValue,
     hasAnomalies,
-    updateAnomalyStats
+    updateAnomalyStats,
+    refreshStats
   };
 };

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import FileUploadSection from '@/components/upload/FileUploadSection';
 import DynamicTable from '@/components/DynamicTable';
@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
+import { AnomalyItem } from '@/types/anomaly';
+import { toast } from 'sonner';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -19,6 +21,10 @@ const Index = () => {
   const [anomalyData, setAnomalyData] = useState<DynamicColumnData[]>([]);
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
+  const [anomalyStats, setAnomalyStats] = useState({
+    count: 0,
+    impact: 0
+  });
 
   useEffect(() => {
     setIsLoaded(true);
@@ -41,6 +47,7 @@ const Index = () => {
   };
 
   const handleAnomalyDataReceived = (data: DynamicColumnData[], headers: string[]) => {
+    console.log('Index - Anomaly data received:', data.length);
     setAnomalyData(data);
     
     // Merge new headers with existing ones
@@ -56,6 +63,32 @@ const Index = () => {
       }, 100);
     }
   };
+  
+  // Add new handler for anomaly stats changes
+  const handleAnomalyStatsChange = useCallback((count: number, impact: number) => {
+    console.log('Index - Anomaly stats changed:', { count, impact });
+    setAnomalyStats({ count, impact });
+    
+    // Display toast notification for first detection
+    if (count > 0 && anomalyStats.count === 0) {
+      toast.success(`Detected ${count} anomalies with total impact of $${Math.abs(impact).toLocaleString()}`);
+    }
+  }, [anomalyStats.count]);
+  
+  // Add new handler for insights received
+  const handleAnomalyInsightsReceived = useCallback((anomalies: AnomalyItem[]) => {
+    console.log('Index - Insights received:', anomalies.length);
+    
+    // Display toast notification about insights
+    if (anomalies.length > 0) {
+      toast.success(`Generated ${anomalies.length} AI insights from anomaly data`);
+      
+      // Scroll to insights section
+      setTimeout(() => {
+        document.getElementById('insights')?.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
@@ -105,7 +138,11 @@ const Index = () => {
           {showTable || anomalyData.length > 0 ? (
             <div className="space-y-8">
               <div className="flex justify-center mb-8">
-                <AnomalyDetectionButton onAnomalyDataReceived={handleAnomalyDataReceived} />
+                <AnomalyDetectionButton 
+                  onAnomalyDataReceived={handleAnomalyDataReceived} 
+                  onAnomalyInsightsReceived={handleAnomalyInsightsReceived}
+                  onAnomalyStatsChange={handleAnomalyStatsChange}
+                />
               </div>
             
               <Tabs defaultValue="current" className="w-full">

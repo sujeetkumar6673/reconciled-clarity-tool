@@ -1,20 +1,23 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Download, Sparkles, Brain } from 'lucide-react';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { Progress } from '@/components/ui/progress';
 import { AnomalyItem } from '@/types/anomaly';
+import { toast } from 'sonner';
 
 interface AnomalyDetectionButtonProps {
   onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
   onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
+  onAnomalyStatsChange?: (count: number, impact: number) => void;
 }
 
 const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({ 
   onAnomalyDataReceived,
-  onAnomalyInsightsReceived
+  onAnomalyInsightsReceived,
+  onAnomalyStatsChange
 }) => {
   const { 
     isDetecting, 
@@ -26,11 +29,41 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     progress,
     hasAnomalies,
     totalAnomaliesCount,
-    totalImpactValue
+    totalImpactValue,
+    refreshStats
   } = useAnomalyDetection({ 
     onAnomalyDataReceived,
-    onAnomalyInsightsReceived
+    onAnomalyInsightsReceived,
+    onAnomalyStatsChange
   });
+
+  // Force refresh of stats when totalAnomaliesCount or totalImpactValue changes
+  useEffect(() => {
+    console.log('AnomalyDetectionButton - Stats detected:', { totalAnomaliesCount, totalImpactValue });
+    if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
+      refreshStats();
+    }
+  }, [totalAnomaliesCount, totalImpactValue, refreshStats]);
+
+  // Handle stats update separately
+  const handleUpdateStats = () => {
+    if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
+      console.log('Manually updating stats from button click');
+      refreshStats();
+      toast.success(`Updated stats: ${totalAnomaliesCount} anomalies, impact of $${Math.abs(totalImpactValue).toLocaleString()}`);
+    } else {
+      toast.info('No anomaly data available yet. Detect anomalies first.');
+    }
+  };
+
+  // Generate insights with explicit stats update
+  const handleGenerateInsights = () => {
+    generateInsights();
+    // Force refresh stats after a delay to ensure UI updates
+    setTimeout(() => {
+      refreshStats();
+    }, 500);
+  };
 
   // Loading spinner component
   const LoadingSpinner = () => (
@@ -62,10 +95,23 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
         )}
       </Button>
       
+      {/* Stats Update Button - New */}
+      {hasAnomalies && !isDetecting && (
+        <Button
+          onClick={handleUpdateStats}
+          size="sm"
+          variant="outline"
+          className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Statistics
+        </Button>
+      )}
+      
       {/* Insights Generation Button - Only show after anomalies are detected */}
       {hasAnomalies && !isDetecting && (
         <Button
-          onClick={generateInsights}
+          onClick={handleGenerateInsights}
           disabled={isGeneratingInsights}
           size="lg"
           variant="outline"
