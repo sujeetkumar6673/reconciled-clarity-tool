@@ -18,6 +18,9 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   resolvedCount,
   totalCount
 }) => {
+  // Debug log to see what values are being passed to the component
+  console.log('AnomalySummaryCards props:', { totalAnomalies, totalImpact, resolutionRate });
+
   return (
     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-fade-in">
       <Card className="glass-card">

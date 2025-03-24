@@ -126,18 +126,18 @@ export const useAnomalyDetection = ({
             result = await response.json();
             console.log('Anomaly detection API response:', result);
             
-            // Extract anomaly_count and total_impact directly from response
+            // Extract data from the API response
             if (result) {
               // Set total anomalies from the API response
               if (typeof result.anomaly_count === 'number') {
-                setTotalAnomaliesCount(result.anomaly_count);
                 console.log(`Received anomaly_count: ${result.anomaly_count}`);
+                setTotalAnomaliesCount(result.anomaly_count);
               }
               
               // Set total impact from the API response
               if (typeof result.total_impact === 'number') {
-                setTotalImpactValue(result.total_impact);
                 console.log(`Received total_impact: ${result.total_impact}`);
+                setTotalImpactValue(result.total_impact);
               }
               
               if (result.data && Array.isArray(result.data)) {
@@ -161,7 +161,13 @@ export const useAnomalyDetection = ({
                 }
                 
                 setHasAnomalies(result.data.length > 0);
-                toast.success(`Anomaly detection completed! Found ${result.anomaly_count || result.data.length} anomalies.`);
+                
+                // Use either the anomaly_count from the response or the length of the data array
+                const anomalyCount = typeof result.anomaly_count === 'number' 
+                  ? result.anomaly_count 
+                  : result.data.length;
+                
+                toast.success(`Anomaly detection completed! Found ${anomalyCount} anomalies.`);
               } else {
                 throw new Error('Invalid data structure in API response');
               }

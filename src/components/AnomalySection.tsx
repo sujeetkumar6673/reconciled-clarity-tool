@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -192,11 +191,12 @@ const AnomalySection = () => {
 
   const { 
     totalAnomaliesCount, 
-    totalImpactValue 
+    totalImpactValue,
+    detectAnomalies
   } = useAnomalyDetection({
     onAnomalyDataReceived: (data, headers) => {
       console.log('Received anomaly data:', data);
-      // Process if needed or store for display
+      setDisplayData(data as AnomalyItem[]);
     }
   });
 
@@ -216,6 +216,12 @@ const AnomalySection = () => {
     if (selectedBucket && (!anomaly.bucket || !anomaly.bucket.startsWith(selectedBucket))) return false;
     return true;
   });
+
+  // For debugging - log the totalAnomaliesCount and totalImpactValue whenever they change
+  useEffect(() => {
+    console.log('AnomalySection - totalAnomaliesCount:', totalAnomaliesCount);
+    console.log('AnomalySection - totalImpactValue:', totalImpactValue);
+  }, [totalAnomaliesCount, totalImpactValue]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -260,14 +266,19 @@ const AnomalySection = () => {
   // Calculate summary data
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  // Format total impact for display
+  // Format total impact for display - use the actual totalImpactValue from the API if available
   const formattedTotalImpact = totalImpactValue 
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
-    : '$38,973.05'; // Fallback value
+    : '$0.00'; // Better default value
   
   const resolutionRate = resolvedCount > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
-    : '20%';
+    : '0%';
+
+  // For development/testing purposes, you can trigger detectAnomalies on component mount
+  // useEffect(() => {
+  //   detectAnomalies();
+  // }, []);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
@@ -281,7 +292,7 @@ const AnomalySection = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Summary cards */}
         <AnomalySummaryCards 
-          totalAnomalies={totalAnomaliesCount || anomaliesData.length}
+          totalAnomalies={totalAnomaliesCount || 0}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
