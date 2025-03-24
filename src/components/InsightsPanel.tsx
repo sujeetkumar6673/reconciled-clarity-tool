@@ -106,11 +106,6 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
     }
   };
 
-  const handleGenerateMoreInsights = () => {
-    console.log('Generating more insights...');
-    generateInsights();
-  };
-
   const handleExecuteAction = (actionType: string) => {
     toast.success(`Action "${actionType}" initiated`);
   };
@@ -155,7 +150,6 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
             insights={insights}
             selectedInsightId={selectedInsight?.id}
             onSelectInsight={setSelectedInsight}
-            onGenerateMore={handleGenerateMoreInsights}
             loading={isGeneratingInsights}
             totalAnomalies={contextTotalAnomalies || apiTotalAnomalies}
           />
@@ -175,7 +169,7 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
             <div className="rounded-lg border p-6 text-center text-muted-foreground">
               <Brain className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <h3 className="text-lg font-medium mb-2">No Insights Selected</h3>
-              <p>Generate insights using the button on the left panel to view AI-powered analysis.</p>
+              <p>Generate insights using the AI Insights button in the anomaly detection section to view AI-powered analysis.</p>
             </div>
           )}
 
