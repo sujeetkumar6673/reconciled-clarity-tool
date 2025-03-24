@@ -294,13 +294,15 @@ const AnomalySection = () => {
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00'; 
   
-  const resolutionRate = resolvedCount > 0 
-    ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
+  const resolutionRate = anomaliesData.length > 0 
+    ? (resolvedCount > 0 
+        ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
+        : '0%')
     : '0%';
 
   useEffect(() => {
     console.log('Values for AnomalySummaryCards:', {
-      totalAnomaliesCount,
+      totalAnomalies: totalAnomaliesCount || 0,
       formattedTotalImpact,
       resolutionRate,
       resolvedCount,
@@ -319,7 +321,7 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
-          totalAnomalies={totalAnomaliesCount}
+          totalAnomalies={totalAnomaliesCount || 0}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}

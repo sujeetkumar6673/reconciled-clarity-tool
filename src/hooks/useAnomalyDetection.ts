@@ -117,6 +117,7 @@ export const useAnomalyDetection = ({
                 
                 // Set the anomaly count based on the filtered data
                 setTotalAnomaliesCount(filteredData.length);
+                console.log(`Setting totalAnomaliesCount to ${filteredData.length}`);
                 
                 onAnomalyDataReceived(filteredData, headers);
               }
@@ -166,7 +167,8 @@ export const useAnomalyDetection = ({
                     : [];
                   
                   // Set the anomaly count based on the JSON data if not already set from API response
-                  if (totalAnomaliesCount === 0 && jsonData.length > 0) {
+                  if (typeof result.anomaly_count !== 'number' && jsonData.length > 0) {
+                    console.log(`Setting anomaly count from jsonData.length: ${jsonData.length}`);
                     setTotalAnomaliesCount(jsonData.length);
                   }
                   
@@ -210,7 +212,7 @@ export const useAnomalyDetection = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, totalAnomaliesCount]);
+  }, [onAnomalyDataReceived, onAnomalyInsightsReceived]);
 
   const downloadFile = () => {
     if (resultFile) {
