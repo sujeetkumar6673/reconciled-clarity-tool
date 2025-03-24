@@ -138,7 +138,7 @@ export const useAnomalyDetection = ({
             
             // Extract data from the API response
             if (result) {
-              // Immediately update totalAnomaliesCount and totalImpactValue
+              // CRITICAL FIX: Update state with values from the API immediately
               if (typeof result.anomaly_count === 'number') {
                 console.log(`Received anomaly_count: ${result.anomaly_count}`);
                 setTotalAnomaliesCount(result.anomaly_count);

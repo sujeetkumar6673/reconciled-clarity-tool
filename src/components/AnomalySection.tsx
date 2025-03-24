@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -244,17 +243,14 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  // Format the total impact value from the API response
-  const formattedTotalImpact = totalImpactValue !== 0 
+  const formattedTotalImpact = typeof totalImpactValue === 'number' 
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00';
   
-  // Calculate resolution rate with a fallback to 0% if no anomalies
   const resolutionRate = anomaliesData.length > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
 
-  // Log values for debugging - critical to diagnose the issue
   useEffect(() => {
     console.log('AnomalySection - totalAnomaliesCount:', totalAnomaliesCount);
     console.log('AnomalySection - totalImpactValue:', totalImpactValue);
@@ -317,9 +313,8 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Pass the state values directly from hook to component */}
         <AnomalySummaryCards 
-          totalAnomalies={totalAnomaliesCount}
+          totalAnomalies={totalAnomaliesCount || 0}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
