@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Download, Sparkles, Brain, RefreshCw } from 'lucide-react';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -18,6 +19,9 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
   onAnomalyInsightsReceived,
   onAnomalyStatsChange
 }) => {
+  // Local state to ensure UI updates
+  const [statsKey, setStatsKey] = useState(0);
+  
   const { 
     isDetecting, 
     isGeneratingInsights,
@@ -40,6 +44,8 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     console.log('AnomalyDetectionButton - Stats detected:', { totalAnomaliesCount, totalImpactValue });
     if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
       refreshStats();
+      // Force re-render when stats change
+      setStatsKey(prev => prev + 1);
     }
   }, [totalAnomaliesCount, totalImpactValue, refreshStats]);
 
@@ -47,6 +53,12 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
       console.log('Manually updating stats from button click');
       refreshStats();
+      // Force re-render and propagate changes
+      setStatsKey(prev => prev + 1);
+      // Call callback directly with current values
+      if (onAnomalyStatsChange) {
+        onAnomalyStatsChange(totalAnomaliesCount, totalImpactValue);
+      }
       toast.success(`Updated stats: ${totalAnomaliesCount} anomalies, impact of $${Math.abs(totalImpactValue).toLocaleString()}`);
     } else {
       toast.info('No anomaly data available yet. Detect anomalies first.');
@@ -57,6 +69,12 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     generateInsights();
     setTimeout(() => {
       refreshStats();
+      // Force re-render after insights generation
+      setStatsKey(prev => prev + 1);
+      // Call callback directly
+      if (onAnomalyStatsChange) {
+        onAnomalyStatsChange(totalAnomaliesCount, totalImpactValue);
+      }
     }, 500);
   };
 
@@ -68,7 +86,7 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
   );
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4" key={`anomaly-buttons-${statsKey}`}>
       <Button
         onClick={detectAnomalies}
         disabled={isDetecting}

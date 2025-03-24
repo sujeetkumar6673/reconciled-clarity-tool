@@ -18,7 +18,13 @@ export const useAnomalyStats = ({ onStatsChange }: UseAnomalyStatsProps = {}) =>
   // Log state updates for debugging
   useEffect(() => {
     console.log('useAnomalyStats - State updated:', { totalAnomaliesCount, totalImpactValue });
-  }, [totalAnomaliesCount, totalImpactValue]);
+    
+    // Call onStatsChange when state updates
+    if (onStatsChange && (totalAnomaliesCount > 0 || totalImpactValue !== 0)) {
+      console.log('Calling onStatsChange from useEffect with:', { count: totalAnomaliesCount, impact: totalImpactValue });
+      onStatsChange(totalAnomaliesCount, totalImpactValue);
+    }
+  }, [totalAnomaliesCount, totalImpactValue, onStatsChange]);
 
   // Simplified state update function for anomaly stats with enhanced callback handling
   const updateAnomalyStats = useCallback((count: number, impact: number) => {
@@ -35,17 +41,6 @@ export const useAnomalyStats = ({ onStatsChange }: UseAnomalyStatsProps = {}) =>
     if (onStatsChange) {
       console.log('Calling onStatsChange with:', { count, impact });
       onStatsChange(count, impact);
-      
-      // Also call it after a small delay to ensure it takes effect
-      setTimeout(() => {
-        console.log('Delayed onStatsChange call with:', { count, impact });
-        onStatsChange(count, impact);
-      }, 100);
-    }
-    
-    // Display toast notification for significant updates
-    if (count > 0) {
-      toast.success(`Updated anomaly statistics: ${count} anomalies found with impact of $${Math.abs(impact).toLocaleString()}`);
     }
     
     // Log state update with a delay to verify it took effect
