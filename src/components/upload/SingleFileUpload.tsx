@@ -10,7 +10,7 @@ import { API_BASE_URL } from '@/utils/apiUtils';
 import { parseCSV } from '@/lib/csv-parser';
 
 interface SingleFileUploadProps {
-  onFileSplitComplete: (file1Data: DynamicColumnData[], file2Data: DynamicColumnData[], headers: string[], actions: any[]) => void;
+  onFileSplitComplete: (file1Data: DynamicColumnData[], file2Data: DynamicColumnData[], headers: string[], actions: any[], filename: string) => void;
 }
 
 export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitComplete }) => {
@@ -147,7 +147,8 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
         
         toast.success(`Successfully processed ${selectedFile.name}`, { id: fileToastId });
         
-        onFileSplitComplete(file1Data, file2Data, headers, actions);
+        // Pass the filename to the parent component
+        onFileSplitComplete(file1Data, file2Data, headers, actions, selectedFile.name);
       } catch (error) {
         console.error('Error processing file:', error);
         toast.error(`Error processing file: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: fileToastId });
@@ -179,7 +180,8 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
           }
         ];
         
-        onFileSplitComplete(file1Data, file2Data, headers, actions);
+        // Pass the filename to the parent component even in error case
+        onFileSplitComplete(file1Data, file2Data, headers, actions, selectedFile.name);
       }
     } finally {
       setIsUploading(false);

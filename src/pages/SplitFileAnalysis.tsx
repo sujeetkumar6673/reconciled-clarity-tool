@@ -1,15 +1,26 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Brain } from 'lucide-react';
 import { SingleFileUpload } from '@/components/upload/SingleFileUpload';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import DynamicTable from '@/components/DynamicTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ActionsList from '@/components/insights/ActionsList';
+import RuleSuggestionsPanel from '@/components/insights/RuleSuggestionsPanel';
 import { useAnomalyContext } from '@/context/AnomalyContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { API_BASE_URL } from '@/utils/apiUtils';
+
+interface RuleSuggestion {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  priority: 'high' | 'medium' | 'low';
+}
 
 const SplitFileAnalysis = () => {
   const [isLoaded, setIsLoaded] = useState(true);
@@ -18,18 +29,23 @@ const SplitFileAnalysis = () => {
   const [file2Data, setFile2Data] = useState<DynamicColumnData[]>([]);
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [anomalyActions, setAnomalyActions] = useState<any[]>([]);
+  const [uploadedFilename, setUploadedFilename] = useState<string>('');
+  const [ruleSuggestions, setRuleSuggestions] = useState<RuleSuggestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const { updateAnomalyStats } = useAnomalyContext();
 
   const handleFileSplitComplete = (
     file1Data: DynamicColumnData[],
     file2Data: DynamicColumnData[],
     headers: string[],
-    actions: any[]
+    actions: any[],
+    filename: string
   ) => {
     setFile1Data(file1Data);
     setFile2Data(file2Data);
     setTableHeaders(headers);
     setAnomalyActions(actions);
+    setUploadedFilename(filename);
     setShowTable(true);
     
     // Update anomaly stats in the global context
@@ -49,6 +65,70 @@ const SplitFileAnalysis = () => {
     setTimeout(() => {
       document.getElementById('split-data')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+  };
+
+  const handleGetRuleSuggestions = async () => {
+    if (!uploadedFilename) {
+      toast.error('Please upload a file first before getting recommendations');
+      return;
+    }
+
+    setIsLoadingSuggestions(true);
+    const toastId = toast.loading('Generating AI recommendations...');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/rule-suggestions?filename=${encodeURIComponent(uploadedFilename)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.data && Array.isArray(result.data)) {
+        setRuleSuggestions(result.data);
+        toast.success('Recommendations generated successfully', { id: toastId });
+        
+        // Scroll to recommendations section
+        setTimeout(() => {
+          document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      } else {
+        toast.error('Invalid recommendations data received from server', { id: toastId });
+      }
+    } catch (error) {
+      console.error('Error fetching rule suggestions:', error);
+      toast.error(`Error getting recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
+      
+      // Generate fallback suggestions for demo purposes
+      const fallbackSuggestions = [
+        {
+          id: 1,
+          title: 'Missing account reconciliation',
+          description: 'Several accounts in Catalyst are missing corresponding Impact records',
+          category: 'Data Integrity',
+          priority: 'high' as const
+        },
+        {
+          id: 2,
+          title: 'Duplicate transactions detected',
+          description: 'Multiple identical transactions found across systems',
+          category: 'Transaction Validation',
+          priority: 'medium' as const
+        },
+        {
+          id: 3,
+          title: 'Schedule regular reconciliation',
+          description: 'Set up automatic reconciliation processes on a weekly basis',
+          category: 'Process Improvement',
+          priority: 'low' as const
+        }
+      ];
+      
+      setRuleSuggestions(fallbackSuggestions);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
   };
 
   return (
@@ -96,6 +176,18 @@ const SplitFileAnalysis = () => {
         <div className="max-w-6xl mx-auto animate-fade-in-up">
           {showTable ? (
             <div className="space-y-8">
+              <div className="flex justify-center mb-8">
+                <Button 
+                  className="px-8 text-lg"
+                  onClick={handleGetRuleSuggestions}
+                  disabled={isLoadingSuggestions}
+                  size="lg"
+                >
+                  <Brain className="mr-2 h-5 w-5" />
+                  {isLoadingSuggestions ? 'Getting Recommendations...' : 'Get AI Recommendations'}
+                </Button>
+              </div>
+            
               <Tabs defaultValue="file1" className="w-full">
                 <div className="flex justify-center mb-6">
                   <TabsList>
@@ -147,7 +239,17 @@ const SplitFileAnalysis = () => {
         </div>
       </section>
       
-      <section id="actions" className="py-20 px-4 bg-white dark:bg-gray-900">
+      <section id="recommendations" className="py-20 px-4 bg-white dark:bg-gray-900">
+        <div className="max-w-4xl mx-auto animate-fade-in-up">
+          <h2 className="text-2xl font-medium text-center mb-8">AI-Powered Recommendations</h2>
+          <RuleSuggestionsPanel 
+            suggestions={ruleSuggestions} 
+            isLoading={isLoadingSuggestions} 
+          />
+        </div>
+      </section>
+      
+      <section id="actions" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-4xl mx-auto animate-fade-in-up">
           <h2 className="text-2xl font-medium text-center mb-8">Suggested Actions</h2>
           <ActionsList actions={anomalyActions} onExecuteAction={(actionType) => {
