@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,11 +44,16 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
   
   const { updateAnomalyStats, updateAnomalyData } = useAnomalyContext();
+  const processedExternalStats = useRef(false);
   
+  // Initialize with external stats only once
   useEffect(() => {
-    if (externalAnomalyStats && (externalAnomalyStats.count > 0 || externalAnomalyStats.impact !== 0)) {
+    if (externalAnomalyStats && 
+        (externalAnomalyStats.count > 0 || externalAnomalyStats.impact !== 0) && 
+        !processedExternalStats.current) {
       console.log('AnomalySection - Initializing with external stats:', externalAnomalyStats);
       updateAnomalyStats(externalAnomalyStats.count, externalAnomalyStats.impact);
+      processedExternalStats.current = true;
     }
   }, [externalAnomalyStats, updateAnomalyStats]);
 
@@ -88,9 +94,20 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
     updateAnomalyData(transformedData);
   }, [updateAnomalyData]);
 
+  // Use a ref to prevent redundant callbacks
+  const prevStatsRef = useRef({ count: 0, impact: 0 });
+  
   const handleStatsChange = useCallback((count: number, impact: number) => {
+    // Skip update if values haven't changed
+    if (prevStatsRef.current.count === count && prevStatsRef.current.impact === impact) {
+      return;
+    }
+    
     console.log('AnomalySection - Stats changed:', { count, impact });
     updateAnomalyStats(count, impact);
+    
+    // Update ref with new values
+    prevStatsRef.current = { count, impact };
   }, [updateAnomalyStats]);
 
   const { detectAnomalies, isDetecting } = useAnomalyDetection({
@@ -212,7 +229,7 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
                   <div className="text-xs font-medium text-muted-foreground mr-1 mt-1">AI Buckets:</div>
                   {uniqueBuckets.map((bucket) => (
                     <Badge
-                      key={bucket as React.Key}
+                      key={bucket as string}
                       variant={selectedBucket === bucket ? 'default' : 'outline'}
                       className="cursor-pointer"
                       onClick={() => 

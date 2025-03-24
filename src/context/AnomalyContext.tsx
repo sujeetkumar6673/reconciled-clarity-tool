@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useRef, useCallback } from 'react';
 import { AnomalyItem } from '@/types/anomaly';
 
 interface AnomalyContextType {
@@ -40,9 +40,18 @@ export const AnomalyProvider: React.FC<{ children: ReactNode }> = ({ children })
     totalCount: 0
   });
   const [anomalyData, setAnomalyData] = useState<AnomalyItem[]>([]);
+  
+  // Use a ref to track previous values and prevent redundant updates
+  const prevStatsRef = useRef({ count: 0, impact: 0 });
 
   // Update stats
-  const updateAnomalyStats = (count: number, impact: number) => {
+  const updateAnomalyStats = useCallback((count: number, impact: number) => {
+    // Skip update if values haven't changed
+    if (prevStatsRef.current.count === count && prevStatsRef.current.impact === impact) {
+      console.log('AnomalyContext - Skipping redundant update:', { count, impact });
+      return;
+    }
+    
     console.log('AnomalyContext - Updating stats:', { count, impact });
     setAnomalyStats(prev => ({
       ...prev,
@@ -50,10 +59,13 @@ export const AnomalyProvider: React.FC<{ children: ReactNode }> = ({ children })
       totalImpact: impact,
       totalCount: Math.max(count, prev.totalCount)
     }));
-  };
+    
+    // Update ref with new values
+    prevStatsRef.current = { count, impact };
+  }, []);
 
   // Update anomaly data
-  const updateAnomalyData = (data: AnomalyItem[]) => {
+  const updateAnomalyData = useCallback((data: AnomalyItem[]) => {
     console.log('AnomalyContext - Updating data:', { count: data.length });
     setAnomalyData(data);
     
@@ -64,14 +76,15 @@ export const AnomalyProvider: React.FC<{ children: ReactNode }> = ({ children })
       resolvedCount,
       totalCount: Math.max(data.length, prev.totalCount)
     }));
-  };
+  }, []);
 
   // Force refresh of stats - called when refresh button clicked
-  const refreshStats = () => {
+  const refreshStats = useCallback(() => {
     console.log('AnomalyContext - Forcing refresh of stats');
     // This triggers a re-render in components consuming the context
+    // Instead of creating a new object, we'll just notify listeners about current data
     setAnomalyStats(prev => ({ ...prev }));
-  };
+  }, []);
 
   return (
     <AnomalyContext.Provider value={{

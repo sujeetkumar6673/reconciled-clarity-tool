@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Download, Sparkles, Brain, RefreshCw } from 'lucide-react';
@@ -12,11 +11,13 @@ import { useAnomalyContext } from '@/context/AnomalyContext';
 interface AnomalyDetectionButtonProps {
   onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
   onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
+  onAnomalyStatsChange?: (count: number, impact: number) => void;
 }
 
 const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({ 
   onAnomalyDataReceived,
-  onAnomalyInsightsReceived
+  onAnomalyInsightsReceived,
+  onAnomalyStatsChange
 }) => {
   // Use context instead of local state
   const { updateAnomalyStats, refreshStats, anomalyStats } = useAnomalyContext();
