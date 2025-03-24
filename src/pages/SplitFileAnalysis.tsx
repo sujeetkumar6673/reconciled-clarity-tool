@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -100,28 +99,25 @@ const SplitFileAnalysis = () => {
       console.error('Error fetching rule suggestions:', error);
       toast.error(`Error getting recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
       
-      // Generate fallback suggestions for demo purposes
+      // For demo/testing purposes - we can remove this in production
       const fallbackSuggestions = [
         {
-          id: 1,
-          title: 'Missing account reconciliation',
-          description: 'Several accounts in Catalyst are missing corresponding Impact records',
-          category: 'Data Integrity',
-          priority: 'high' as const
+          TRADEID: 68911236,
+          MatchStatus: 'Quantity_Break',
+          RootCause: 'Quantity mismatch: Catalyst=119966816, Impact=119966813',
+          SuggestedAction: 'Investigate booking differences and update lower quantity.'
         },
         {
-          id: 2,
-          title: 'Duplicate transactions detected',
-          description: 'Multiple identical transactions found across systems',
-          category: 'Transaction Validation',
-          priority: 'medium' as const
+          TRADEID: 69014525,
+          MatchStatus: 'Price_Break',
+          RootCause: 'Price mismatch: Catalyst=98.8512, Impact=98.85',
+          SuggestedAction: 'Price difference due to rounding. Acceptable.'
         },
         {
-          id: 3,
-          title: 'Schedule regular reconciliation',
-          description: 'Set up automatic reconciliation processes on a weekly basis',
-          category: 'Process Improvement',
-          priority: 'low' as const
+          TRADEID: 69145541,
+          MatchStatus: 'Catalyst_Only',
+          RootCause: 'Trade exists in Catalyst but missing in Impact.',
+          SuggestedAction: 'Check if trade ingestion failed in Impact. Trigger sync.'
         }
       ];
       
