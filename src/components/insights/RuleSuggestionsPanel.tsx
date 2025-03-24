@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -79,8 +80,8 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
         updateData[`${source.charAt(0).toUpperCase() + source.slice(1)}_PRICE`] = (Math.random() * 100 + 50).toFixed(2);
       }
       
-      // Call the API with the correct endpoint and data format
-      const response = await fetch(`${API_BASE_URL}/recon/update-row?source=${source}&trade_id=${tradeId}`, {
+      // Call the API with the correct endpoint and data format - removed "recon/" prefix
+      const response = await fetch(`${API_BASE_URL}/update-row?source=${source}&trade_id=${tradeId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

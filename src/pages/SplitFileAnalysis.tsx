@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ const SplitFileAnalysis = () => {
     const toastId = toast.loading('Generating AI recommendations...');
 
     try {
+      // Remove the 'recon/' prefix from the API endpoint
       const response = await fetch(`${API_BASE_URL}/rule-suggestions?filename=${encodeURIComponent(uploadedFilename)}`);
       
       if (!response.ok) {
