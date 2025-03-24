@@ -52,4 +52,5 @@ export interface AnomalyItem {
 export interface UseAnomalyDetectionProps {
   onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
   onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
+  onAnomalyStatsChange?: (count: number, impact: number) => void;
 }

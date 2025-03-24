@@ -20,7 +20,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
 }) => {
   // Add debugging to track prop changes
   useEffect(() => {
-    console.log('AnomalySummaryCards received new props:', { 
+    console.log('AnomalySummaryCards received props:', { 
       totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount 
     });
   }, [totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount]);

@@ -10,7 +10,8 @@ import { useAnomalyApiClient } from './useAnomalyApiClient';
 
 export const useAnomalyDetection = ({ 
   onAnomalyDataReceived, 
-  onAnomalyInsightsReceived 
+  onAnomalyInsightsReceived,
+  onAnomalyStatsChange
 }: UseAnomalyDetectionProps = {}) => {
   const [isDetecting, setIsDetecting] = useState(false);
   
@@ -22,7 +23,9 @@ export const useAnomalyDetection = ({
     totalImpactValue, 
     hasAnomalies, 
     updateAnomalyStats 
-  } = useAnomalyStats();
+  } = useAnomalyStats({
+    onStatsChange: onAnomalyStatsChange
+  });
   
   const { 
     isGeneratingInsights, 

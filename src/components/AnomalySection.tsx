@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -243,15 +244,34 @@ const AnomalySection = () => {
     setRefreshKey(prev => prev + 1);
   }, []);
 
+  // Create a separate callback for stats changes
+  const handleStatsChange = useCallback((count: number, impact: number) => {
+    console.log('AnomalySection - Stats changed:', { count, impact });
+    
+    const formattedImpact = impact !== 0
+      ? `$${Math.abs(impact).toLocaleString()}`
+      : '$0.00';
+      
+    setLocalAnomaly(prev => ({
+      ...prev,
+      totalAnomalies: count,
+      totalImpact: formattedImpact
+    }));
+    
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
   const { 
     totalAnomaliesCount,
     totalImpactValue,
     detectAnomalies,
     isDetecting
   } = useAnomalyDetection({
-    onAnomalyDataReceived: handleAnomalyDataReceived
+    onAnomalyDataReceived: handleAnomalyDataReceived,
+    onAnomalyStatsChange: handleStatsChange
   });
 
+  // Also update when hook values change as a backup mechanism
   useEffect(() => {
     console.log('AnomalySection - Hook values updated:', { totalAnomaliesCount, totalImpactValue });
     
@@ -259,12 +279,20 @@ const AnomalySection = () => {
       ? `$${Math.abs(totalImpactValue).toLocaleString()}`
       : '$0.00';
       
-    setLocalAnomaly(prev => ({
-      ...prev,
-      totalAnomalies: totalAnomaliesCount,
-      totalImpact: formattedImpact
-    }));
+    // Force update local state to ensure it matches hook state
+    setLocalAnomaly(prev => {
+      if (prev.totalAnomalies !== totalAnomaliesCount || prev.totalImpact !== formattedImpact) {
+        console.log('Forcing local state update from hook values');
+        return {
+          ...prev,
+          totalAnomalies: totalAnomaliesCount,
+          totalImpact: formattedImpact
+        };
+      }
+      return prev;
+    });
     
+    // Force a re-render to ensure UI is updated
     setRefreshKey(prev => prev + 1);
   }, [totalAnomaliesCount, totalImpactValue]);
 
