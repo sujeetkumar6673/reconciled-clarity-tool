@@ -117,11 +117,12 @@ export const useAnomalyDetection = ({
                   )
                 );
                 
-                // Set the anomaly count based on the filtered data
+                // CRITICAL FIX: First update the state
                 const anomaliesCount = filteredData.length;
                 console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
                 setTotalAnomaliesCount(anomaliesCount);
                 
+                // Then call the callback
                 onAnomalyDataReceived(filteredData, headers);
               }
             }, 
@@ -140,7 +141,7 @@ export const useAnomalyDetection = ({
             
             // Extract data from the API response
             if (result) {
-              // CRITICAL FIX: Update state with values from the API immediately
+              // CRITICAL FIX: First update state with values from the API immediately
               if (typeof result.anomaly_count === 'number') {
                 console.log(`Received anomaly_count: ${result.anomaly_count}`);
                 // Explicitly update state with the correct value
@@ -170,6 +171,7 @@ export const useAnomalyDetection = ({
                     ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
                     : [];
                   
+                  // CRITICAL FIX: Call the callback after updating state
                   onAnomalyDataReceived(jsonData, headers);
                 }
                 

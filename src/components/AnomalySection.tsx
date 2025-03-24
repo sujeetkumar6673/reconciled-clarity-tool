@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -187,6 +187,8 @@ const AnomalySection = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
+  const [localAnomalyCount, setLocalAnomalyCount] = useState(0);
+  const [localImpactValue, setLocalImpactValue] = useState(0);
 
   const { 
     totalAnomaliesCount, 
@@ -229,6 +231,12 @@ const AnomalySection = () => {
     }
   });
 
+  useEffect(() => {
+    console.log('Setting local state from hook values:', { totalAnomaliesCount, totalImpactValue });
+    setLocalAnomalyCount(totalAnomaliesCount || 0);
+    setLocalImpactValue(totalImpactValue || 0);
+  }, [totalAnomaliesCount, totalImpactValue]);
+
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
   const uniqueBuckets = Array.from(
@@ -246,8 +254,8 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  const formattedTotalImpact = totalImpactValue !== 0 && totalImpactValue !== null
-    ? `$${Math.abs(totalImpactValue).toLocaleString()}`
+  const formattedTotalImpact = localImpactValue !== 0
+    ? `$${Math.abs(localImpactValue).toLocaleString()}`
     : '$0.00';
   
   const resolutionRate = anomaliesData.length > 0 
@@ -255,16 +263,16 @@ const AnomalySection = () => {
     : '0%';
 
   useEffect(() => {
-    console.log('AnomalySection debug - totalAnomaliesCount:', totalAnomaliesCount);
-    console.log('AnomalySection debug - totalImpactValue:', totalImpactValue);
+    console.log('AnomalySection debug - localAnomalyCount:', localAnomalyCount);
+    console.log('AnomalySection debug - localImpactValue:', localImpactValue);
     console.log('AnomalySection debug - Formatted values for cards:', {
-      totalAnomalies: totalAnomaliesCount || 0,
+      totalAnomalies: localAnomalyCount,
       formattedTotalImpact,
       resolutionRate,
       resolvedCount,
       totalCount: anomaliesData.length
     });
-  }, [totalAnomaliesCount, totalImpactValue, formattedTotalImpact, resolutionRate, resolvedCount, anomaliesData.length]);
+  }, [localAnomalyCount, localImpactValue, formattedTotalImpact, resolutionRate, resolvedCount, anomaliesData.length]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -317,8 +325,8 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
-          key={`summary-${totalAnomaliesCount}-${totalImpactValue}`}
-          totalAnomalies={totalAnomaliesCount || 0}
+          key={`summary-${localAnomalyCount}-${localImpactValue}`}
+          totalAnomalies={localAnomalyCount}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
