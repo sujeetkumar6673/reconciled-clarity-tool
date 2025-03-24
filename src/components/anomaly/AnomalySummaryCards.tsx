@@ -2,25 +2,25 @@
 import React, { useEffect } from 'react';
 import { AlertTriangle, DollarSign, Clock } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
-interface AnomalySummaryCardsProps {
-  totalAnomalies: number;
-  totalImpact: string;
-  resolutionRate: string;
-  resolvedCount: number;
-  totalCount: number;
-}
-
-const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
-  totalAnomalies,
-  totalImpact,
-  resolutionRate,
-  resolvedCount,
-  totalCount
-}) => {
-  // Add debugging to track prop changes
+const AnomalySummaryCards: React.FC = () => {
+  const { anomalyStats } = useAnomalyContext();
+  const { totalAnomalies, totalImpact, resolvedCount, totalCount } = anomalyStats;
+  
+  // Format the impact value
+  const formattedImpact = totalImpact !== 0
+    ? `$${Math.abs(totalImpact).toLocaleString()}`
+    : '$0.00';
+  
+  // Calculate resolution rate
+  const resolutionRate = totalCount > 0 
+    ? `${Math.round((resolvedCount / totalCount) * 100)}%` 
+    : '0%';
+  
+  // Add debugging to track context changes
   useEffect(() => {
-    console.log('AnomalySummaryCards received props:', { 
+    console.log('AnomalySummaryCards received from context:', { 
       totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount 
     });
   }, [totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount]);
@@ -48,7 +48,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold" data-testid="impact-value">{totalImpact}</div>
+          <div className="text-3xl font-bold" data-testid="impact-value">{formattedImpact}</div>
           <p className="text-sm text-muted-foreground">Combined financial impact</p>
         </CardContent>
       </Card>

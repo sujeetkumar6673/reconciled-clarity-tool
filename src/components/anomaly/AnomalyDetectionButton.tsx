@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Download, Sparkles, Brain, RefreshCw } from 'lucide-react';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -7,20 +7,30 @@ import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { Progress } from '@/components/ui/progress';
 import { AnomalyItem } from '@/types/anomaly';
 import { toast } from 'sonner';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
 interface AnomalyDetectionButtonProps {
   onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
   onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
-  onAnomalyStatsChange?: (count: number, impact: number) => void;
 }
 
 const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({ 
   onAnomalyDataReceived,
-  onAnomalyInsightsReceived,
-  onAnomalyStatsChange
+  onAnomalyInsightsReceived
 }) => {
-  // Local state to ensure UI updates
-  const [statsKey, setStatsKey] = useState(0);
+  // Use context instead of local state
+  const { updateAnomalyStats, refreshStats, anomalyStats } = useAnomalyContext();
+  
+  // Define handler that will update context and call the original callback
+  const handleAnomalyStatsChange = (count: number, impact: number) => {
+    console.log('AnomalyDetectionButton - Stats changed:', { count, impact });
+    updateAnomalyStats(count, impact);
+    
+    // Call original callback
+    if (onAnomalyStatsChange) {
+      onAnomalyStatsChange(count, impact);
+    }
+  };
   
   const { 
     isDetecting, 
@@ -32,49 +42,32 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     progress,
     hasAnomalies,
     totalAnomaliesCount,
-    totalImpactValue,
-    refreshStats
+    totalImpactValue
   } = useAnomalyDetection({ 
     onAnomalyDataReceived,
     onAnomalyInsightsReceived,
-    onAnomalyStatsChange
+    onAnomalyStatsChange: handleAnomalyStatsChange
   });
 
-  useEffect(() => {
-    console.log('AnomalyDetectionButton - Stats detected:', { totalAnomaliesCount, totalImpactValue });
-    if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
-      refreshStats();
-      // Force re-render when stats change
-      setStatsKey(prev => prev + 1);
-    }
-  }, [totalAnomaliesCount, totalImpactValue, refreshStats]);
-
   const handleUpdateStats = () => {
+    console.log('Manually updating stats from button click');
+    
+    // If we have stats from the hook, update the context
     if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
-      console.log('Manually updating stats from button click');
-      refreshStats();
-      // Force re-render and propagate changes
-      setStatsKey(prev => prev + 1);
-      // Call callback directly with current values
-      if (onAnomalyStatsChange) {
-        onAnomalyStatsChange(totalAnomaliesCount, totalImpactValue);
-      }
-      toast.success(`Updated stats: ${totalAnomaliesCount} anomalies, impact of $${Math.abs(totalImpactValue).toLocaleString()}`);
-    } else {
-      toast.info('No anomaly data available yet. Detect anomalies first.');
+      updateAnomalyStats(totalAnomaliesCount, totalImpactValue);
     }
+    
+    // Trigger context refresh to propagate changes
+    refreshStats();
+    
+    toast.success(`Updated stats: ${totalAnomaliesCount} anomalies, impact of $${Math.abs(totalImpactValue).toLocaleString()}`);
   };
 
   const handleGenerateInsights = () => {
     generateInsights();
     setTimeout(() => {
+      // After generating insights, refresh stats
       refreshStats();
-      // Force re-render after insights generation
-      setStatsKey(prev => prev + 1);
-      // Call callback directly
-      if (onAnomalyStatsChange) {
-        onAnomalyStatsChange(totalAnomaliesCount, totalImpactValue);
-      }
     }, 500);
   };
 
@@ -86,7 +79,7 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
   );
 
   return (
-    <div className="flex flex-col items-center gap-4" key={`anomaly-buttons-${statsKey}`}>
+    <div className="flex flex-col items-center gap-4">
       <Button
         onClick={detectAnomalies}
         disabled={isDetecting}
@@ -166,5 +159,10 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     </div>
   );
 };
+
+// Include the original onAnomalyStatsChange prop for backward compatibility
+interface AnomalyDetectionButtonProps {
+  onAnomalyStatsChange?: (count: number, impact: number) => void;
+}
 
 export default AnomalyDetectionButton;

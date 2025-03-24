@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import { AnomalyItem } from '@/types/anomaly';
 import { toast } from 'sonner';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
 const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -20,10 +21,8 @@ const Index = () => {
   const [anomalyData, setAnomalyData] = useState<DynamicColumnData[]>([]);
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [showTable, setShowTable] = useState(false);
-  const [anomalyStats, setAnomalyStats] = useState({
-    count: 0,
-    impact: 0
-  });
+  
+  const { updateAnomalyStats } = useAnomalyContext();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -63,18 +62,18 @@ const Index = () => {
     }
   };
   
-  // Add new handler for anomaly stats changes
   const handleAnomalyStatsChange = useCallback((count: number, impact: number) => {
     console.log('Index - Anomaly stats changed:', { count, impact });
-    setAnomalyStats({ count, impact });
+    
+    // Update global context
+    updateAnomalyStats(count, impact);
     
     // Display toast notification for first detection
-    if (count > 0 && anomalyStats.count === 0) {
+    if (count > 0) {
       toast.success(`Detected ${count} anomalies with total impact of $${Math.abs(impact).toLocaleString()}`);
     }
-  }, [anomalyStats.count]);
+  }, [updateAnomalyStats]);
   
-  // Add new handler for insights received
   const handleAnomalyInsightsReceived = useCallback((anomalies: AnomalyItem[]) => {
     console.log('Index - Insights received:', anomalies.length);
     
@@ -213,7 +212,7 @@ const Index = () => {
       {/* Anomaly Detection Section */}
       <section id="anomalies" className="py-20 px-4 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          <AnomalySection externalAnomalyStats={anomalyStats} />
+          <AnomalySection />
         </div>
       </section>
       

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,15 +11,14 @@ import { AnomalyItem } from './anomaly/AnomalyCard';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { toast } from 'sonner';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
-// Define the chart data structure
 interface ChartDataPoint {
   date: string;
   anomalies: number;
   amount: number;
 }
 
-// Mock chart data
 const mockChartData: ChartDataPoint[] = [
   { date: '01/01', anomalies: 5, amount: 2400 },
   { date: '01/02', anomalies: 7, amount: 1400 },
@@ -43,18 +41,16 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const forceUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  const [localAnomaly, setLocalAnomaly] = useState({
-    totalAnomalies: externalAnomalyStats?.count || 0,
-    totalImpact: externalAnomalyStats?.impact 
-      ? `$${Math.abs(externalAnomalyStats.impact).toLocaleString()}` 
-      : '$0.00',
-    resolvedCount: 0,
-    totalCount: externalAnomalyStats?.count || 0
-  });
+  const { updateAnomalyStats, updateAnomalyData } = useAnomalyContext();
   
+  useEffect(() => {
+    if (externalAnomalyStats && (externalAnomalyStats.count > 0 || externalAnomalyStats.impact !== 0)) {
+      console.log('AnomalySection - Initializing with external stats:', externalAnomalyStats);
+      updateAnomalyStats(externalAnomalyStats.count, externalAnomalyStats.impact);
+    }
+  }, [externalAnomalyStats, updateAnomalyStats]);
+
   const handleAnomalyDataReceived = useCallback((data: DynamicColumnData[], headers: string[]) => {
     console.log('Anomaly data received with length:', data.length);
     
@@ -89,97 +85,19 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
     });
     
     setDisplayData(transformedData);
-    
-    const resolvedCount = transformedData.filter(a => a.status === 'resolved').length;
-    
-    setLocalAnomaly(prev => ({
-      ...prev,
-      totalCount: transformedData.length,
-      resolvedCount
-    }));
-    
-    setRefreshKey(prev => prev + 1);
-  }, []);
+    updateAnomalyData(transformedData);
+  }, [updateAnomalyData]);
 
   const handleStatsChange = useCallback((count: number, impact: number) => {
     console.log('AnomalySection - Stats changed:', { count, impact });
-    
-    const formattedImpact = impact !== 0
-      ? `$${Math.abs(impact).toLocaleString()}`
-      : '$0.00';
-    
-    setLocalAnomaly({
-      totalAnomalies: count,
-      totalImpact: formattedImpact,
-      resolvedCount: localAnomaly.resolvedCount,
-      totalCount: Math.max(count, localAnomaly.totalCount)
-    });
-    
-    console.log('Set localAnomaly to:', {
-      totalAnomalies: count,
-      totalImpact: formattedImpact,
-      resolvedCount: localAnomaly.resolvedCount,
-      totalCount: Math.max(count, localAnomaly.totalCount)
-    });
-    
-    setRefreshKey(prev => prev + 1);
-    
-    if (forceUpdateTimeoutRef.current) {
-      clearTimeout(forceUpdateTimeoutRef.current);
-    }
-    
-    forceUpdateTimeoutRef.current = setTimeout(() => {
-      console.log('Forcing refresh after stats change');
-      setRefreshKey(prev => prev + 1);
-      toast.success(`Stats updated: ${count} anomalies with impact of $${Math.abs(impact).toLocaleString()}`);
-    }, 100);
-  }, [localAnomaly.resolvedCount, localAnomaly.totalCount]);
+    updateAnomalyStats(count, impact);
+  }, [updateAnomalyStats]);
 
-  const { 
-    totalAnomaliesCount,
-    totalImpactValue,
-    detectAnomalies,
-    isDetecting
-  } = useAnomalyDetection({
+  const { detectAnomalies, isDetecting } = useAnomalyDetection({
     onAnomalyDataReceived: handleAnomalyDataReceived,
     onAnomalyStatsChange: handleStatsChange
   });
 
-  useEffect(() => {
-    console.log('AnomalySection - Hook values updated:', { totalAnomaliesCount, totalImpactValue });
-    
-    if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
-      const formattedImpact = totalImpactValue !== 0
-        ? `$${Math.abs(totalImpactValue).toLocaleString()}`
-        : '$0.00';
-      
-      setLocalAnomaly({
-        totalAnomalies: totalAnomaliesCount,
-        totalImpact: formattedImpact,
-        resolvedCount: localAnomaly.resolvedCount,
-        totalCount: Math.max(totalAnomaliesCount, localAnomaly.totalCount)
-      });
-      
-      console.log('Updated localAnomaly from hook values to:', {
-        totalAnomalies: totalAnomaliesCount,
-        totalImpact: formattedImpact,
-        resolvedCount: localAnomaly.resolvedCount,
-        totalCount: Math.max(totalAnomaliesCount, localAnomaly.totalCount)
-      });
-      
-      setRefreshKey(prev => prev + 1);
-    }
-  }, [totalAnomaliesCount, totalImpactValue, localAnomaly.resolvedCount, localAnomaly.totalCount]);
-
-  useEffect(() => {
-    return () => {
-      if (forceUpdateTimeoutRef.current) {
-        clearTimeout(forceUpdateTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Use displayData as the source of truth, not the undefined anomalyData
   const anomaliesData = displayData.length > 0 ? displayData : [];
 
   const uniqueBuckets = Array.from(
@@ -194,10 +112,6 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
     if (selectedBucket && (!anomaly.bucket || !anomaly.bucket.startsWith(selectedBucket))) return false;
     return true;
   });
-  
-  const resolutionRate = localAnomaly.totalCount > 0 
-    ? `${Math.round((localAnomaly.resolvedCount / localAnomaly.totalCount) * 100)}%` 
-    : '0%';
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -249,14 +163,7 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <AnomalySummaryCards 
-          key={`summary-cards-${refreshKey}`}
-          totalAnomalies={localAnomaly.totalAnomalies}
-          totalImpact={localAnomaly.totalImpact}
-          resolutionRate={resolutionRate}
-          resolvedCount={localAnomaly.resolvedCount}
-          totalCount={localAnomaly.totalCount}
-        />
+        <AnomalySummaryCards />
 
         <AnomalyTrendChart chartData={mockChartData} />
 
@@ -358,13 +265,6 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
             </CardFooter>
           </Card>
         </div>
-      </div>
-
-      <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
-        <p>Debug: Anomaly Count: {localAnomaly.totalAnomalies}, Impact: {localAnomaly.totalImpact}, Render Key: {refreshKey}</p>
-        {externalAnomalyStats && (
-          <p>External Stats: Count: {externalAnomalyStats.count}, Impact: ${Math.abs(externalAnomalyStats.impact).toLocaleString()}</p>
-        )}
       </div>
     </div>
   );
