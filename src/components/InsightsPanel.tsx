@@ -8,12 +8,16 @@ import InsightContent from './insights/InsightContent';
 import ActionsList from './insights/ActionsList';
 import { useAnomalyInsights } from '@/hooks/useAnomalyInsights';
 import { AnomalyItem } from '@/types/anomaly';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
 const InsightsPanel = () => {
   const [insights, setInsights] = useState<any[]>([]);
   const [selectedInsight, setSelectedInsight] = useState<any>(null);
-  const [totalAnomalies, setTotalAnomalies] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key to force re-rendering
+  
+  // Use the anomaly context to get the latest stats
+  const { anomalyStats } = useAnomalyContext();
+  const { totalAnomalies: contextTotalAnomalies } = anomalyStats;
   
   // Create a callback for processing received insights
   const handleInsightsReceived = useCallback((anomalies: AnomalyItem[]) => {
@@ -64,23 +68,28 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
     setSelectedInsight(null);
   }, []);
 
-  // Update total anomalies whenever apiTotalAnomalies changes
+  // Update total anomalies whenever context totalAnomalies or apiTotalAnomalies changes
   useEffect(() => {
-    if (apiTotalAnomalies > 0) {
-      console.log('Updating total anomalies from API:', apiTotalAnomalies);
-      setTotalAnomalies(apiTotalAnomalies);
+    console.log('InsightsPanel context update:', { 
+      contextTotalAnomalies, 
+      apiTotalAnomalies
+    });
+    
+    // Force re-render when context data changes
+    if (contextTotalAnomalies > 0 || apiTotalAnomalies > 0) {
+      setRefreshKey(prev => prev + 1);
     }
-  }, [apiTotalAnomalies]);
+  }, [contextTotalAnomalies, apiTotalAnomalies]);
 
   // Log state changes for debugging
   useEffect(() => {
     console.log('InsightsPanel state updated:', { 
       insightsCount: insights.length, 
       selectedInsightId: selectedInsight?.id,
-      totalAnomalies,
+      totalAnomalies: contextTotalAnomalies || apiTotalAnomalies,
       refreshKey
     });
-  }, [insights, selectedInsight, totalAnomalies, refreshKey]);
+  }, [insights, selectedInsight, contextTotalAnomalies, apiTotalAnomalies, refreshKey]);
 
   const handleCopyInsight = () => {
     if (selectedInsight) {
@@ -140,7 +149,7 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
             onSelectInsight={setSelectedInsight}
             onGenerateMore={handleGenerateMoreInsights}
             loading={isGeneratingInsights}
-            totalAnomalies={totalAnomalies}
+            totalAnomalies={contextTotalAnomalies || apiTotalAnomalies}
           />
         </div>
 

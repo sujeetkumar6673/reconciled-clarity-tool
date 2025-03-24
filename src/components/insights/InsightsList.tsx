@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import InsightItem from './InsightItem';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
 interface InsightsListProps {
   insights: Array<{
@@ -34,13 +35,17 @@ const InsightsList: React.FC<InsightsListProps> = ({
   const [localTotalAnomalies, setLocalTotalAnomalies] = useState(totalAnomalies);
   const [renderKey, setRenderKey] = useState(0);
   
+  // Get anomaly data from context as a fallback
+  const { anomalyStats } = useAnomalyContext();
+  
   // Update local state when props change
   useEffect(() => {
     console.log('InsightsList received props:', {
       insightsCount: insights.length,
       selectedInsightId,
       loading,
-      totalAnomalies
+      totalAnomalies,
+      contextAnomalies: anomalyStats.totalAnomalies
     });
     
     // Only update if we have valid data
@@ -49,11 +54,16 @@ const InsightsList: React.FC<InsightsListProps> = ({
       setRenderKey(prev => prev + 1);
     }
     
-    if (totalAnomalies > 0) {
-      setLocalTotalAnomalies(totalAnomalies);
+    // Use context data if available and prop is not
+    const anomalyCount = totalAnomalies > 0 ? 
+      totalAnomalies : 
+      (anomalyStats.totalAnomalies > 0 ? anomalyStats.totalAnomalies : 0);
+    
+    if (anomalyCount > 0) {
+      setLocalTotalAnomalies(anomalyCount);
       setRenderKey(prev => prev + 1);
     }
-  }, [insights, selectedInsightId, loading, totalAnomalies]);
+  }, [insights, selectedInsightId, loading, totalAnomalies, anomalyStats]);
   
   // Handle generate more with explicit feedback
   const handleGenerateMore = () => {
