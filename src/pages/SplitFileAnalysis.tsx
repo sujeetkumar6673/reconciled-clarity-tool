@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,6 @@ import { SingleFileUpload } from '@/components/upload/SingleFileUpload';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import DynamicTable from '@/components/DynamicTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ActionsList from '@/components/insights/ActionsList';
 import RuleSuggestionsPanel from '@/components/insights/RuleSuggestionsPanel';
 import { useAnomalyContext } from '@/context/AnomalyContext';
 import { toast } from 'sonner';
@@ -27,7 +27,6 @@ const SplitFileAnalysis = () => {
   const [file1Data, setFile1Data] = useState<DynamicColumnData[]>([]);
   const [file2Data, setFile2Data] = useState<DynamicColumnData[]>([]);
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
-  const [anomalyActions, setAnomalyActions] = useState<any[]>([]);
   const [uploadedFilename, setUploadedFilename] = useState<string>('');
   const [ruleSuggestions, setRuleSuggestions] = useState<RuleSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -43,7 +42,6 @@ const SplitFileAnalysis = () => {
     setFile1Data(file1Data);
     setFile2Data(file2Data);
     setTableHeaders(headers);
-    setAnomalyActions(actions);
     setUploadedFilename(filename);
     setShowTable(true);
     
@@ -168,10 +166,10 @@ const SplitFileAnalysis = () => {
         </div>
       </section>
       
-      <section id="split-data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
-        <div className="max-w-6xl mx-auto animate-fade-in-up">
-          {showTable ? (
-            <div className="space-y-8">
+      {showTable && (
+        <>
+          <section id="split-data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
+            <div className="max-w-6xl mx-auto animate-fade-in-up">
               <div className="flex justify-center mb-8">
                 <Button 
                   className="px-8 text-lg"
@@ -183,7 +181,23 @@ const SplitFileAnalysis = () => {
                   {isLoadingSuggestions ? 'Getting Recommendations...' : 'Get AI Recommendations'}
                 </Button>
               </div>
-            
+            </div>
+          </section>
+
+          <section id="recommendations" className="py-20 px-4 bg-white dark:bg-gray-900">
+            <div className="max-w-4xl mx-auto animate-fade-in-up">
+              <h2 className="text-2xl font-medium text-center mb-8">AI-Powered Recommendations</h2>
+              <RuleSuggestionsPanel 
+                suggestions={ruleSuggestions} 
+                isLoading={isLoadingSuggestions} 
+              />
+            </div>
+          </section>
+          
+          <section id="tables" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
+            <div className="max-w-6xl mx-auto animate-fade-in-up">
+              <h2 className="text-2xl font-medium text-center mb-8">Reconciliation Data</h2>
+              
               <Tabs defaultValue="file1" className="w-full">
                 <div className="flex justify-center mb-6">
                   <TabsList>
@@ -193,7 +207,7 @@ const SplitFileAnalysis = () => {
                 </div>
                 
                 <TabsContent value="file1">
-                  <h2 className="text-2xl font-medium text-center mb-6">Catalyst Data</h2>
+                  <h3 className="text-xl font-medium text-center mb-6">Catalyst Data</h3>
                   {file1Data.length > 0 ? (
                     <DynamicTable data={file1Data} headers={tableHeaders} />
                   ) : (
@@ -207,7 +221,7 @@ const SplitFileAnalysis = () => {
                 </TabsContent>
                 
                 <TabsContent value="file2">
-                  <h2 className="text-2xl font-medium text-center mb-6">Impact Data</h2>
+                  <h3 className="text-xl font-medium text-center mb-6">Impact Data</h3>
                   {file2Data.length > 0 ? (
                     <DynamicTable data={file2Data} headers={tableHeaders} />
                   ) : (
@@ -221,39 +235,23 @@ const SplitFileAnalysis = () => {
                 </TabsContent>
               </Tabs>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-medium mb-4">No Split Data Yet</h2>
-              <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-                Upload your CSV file in the section above to view the split data here.
-              </p>
-              <Button onClick={() => document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' })}>
-                Go to Upload Section
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
+          </section>
+        </>
+      )}
       
-      <section id="recommendations" className="py-20 px-4 bg-white dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto animate-fade-in-up">
-          <h2 className="text-2xl font-medium text-center mb-8">AI-Powered Recommendations</h2>
-          <RuleSuggestionsPanel 
-            suggestions={ruleSuggestions} 
-            isLoading={isLoadingSuggestions} 
-          />
-        </div>
-      </section>
-      
-      <section id="actions" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
-        <div className="max-w-4xl mx-auto animate-fade-in-up">
-          <h2 className="text-2xl font-medium text-center mb-8">Suggested Actions</h2>
-          <ActionsList actions={anomalyActions} onExecuteAction={(actionType) => {
-            toast.success(`Executing action: ${actionType}`);
-            // Here you would add the actual action execution logic
-          }} />
-        </div>
-      </section>
+      {!showTable && (
+        <section className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-medium mb-4">No Data Yet</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+              Upload your CSV file in the section above to view the data.
+            </p>
+            <Button onClick={() => document.getElementById('upload')?.scrollIntoView({ behavior: 'smooth' })}>
+              Go to Upload Section
+            </Button>
+          </div>
+        </section>
+      )}
       
       <footer className="py-12 px-4 bg-gray-900 text-white">
         <div className="max-w-6xl mx-auto">
