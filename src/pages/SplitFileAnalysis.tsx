@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -14,11 +13,15 @@ import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '@/utils/apiUtils';
 
 interface RuleSuggestion {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  priority: 'high' | 'medium' | 'low';
+  id?: number;
+  TRADEID?: number;
+  MatchStatus?: string;
+  RootCause?: string;
+  SuggestedAction?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 const SplitFileAnalysis = () => {
@@ -45,7 +48,6 @@ const SplitFileAnalysis = () => {
     setUploadedFilename(filename);
     setShowTable(true);
     
-    // Update anomaly stats in the global context
     const anomalyCount = file1Data.length;
     const impact = file1Data.reduce((sum, item) => {
       const impactValue = typeof item.impact === 'number' ? item.impact : 
@@ -55,10 +57,8 @@ const SplitFileAnalysis = () => {
     
     updateAnomalyStats(anomalyCount, impact);
     
-    // Show success toast
     toast.success(`File successfully processed. Found ${anomalyCount} anomalies.`);
     
-    // Scroll to the data table section
     setTimeout(() => {
       document.getElementById('split-data')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
@@ -83,10 +83,10 @@ const SplitFileAnalysis = () => {
       const result = await response.json();
       
       if (result.data && Array.isArray(result.data)) {
-        setRuleSuggestions(result.data);
+        const suggestions: RuleSuggestion[] = result.data;
+        setRuleSuggestions(suggestions);
         toast.success('Recommendations generated successfully', { id: toastId });
         
-        // Scroll to recommendations section
         setTimeout(() => {
           document.getElementById('recommendations')?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
@@ -97,8 +97,7 @@ const SplitFileAnalysis = () => {
       console.error('Error fetching rule suggestions:', error);
       toast.error(`Error getting recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
       
-      // For demo/testing purposes - we can remove this in production
-      const fallbackSuggestions = [
+      const fallbackSuggestions: RuleSuggestion[] = [
         {
           TRADEID: 68911236,
           MatchStatus: 'Quantity_Break',
