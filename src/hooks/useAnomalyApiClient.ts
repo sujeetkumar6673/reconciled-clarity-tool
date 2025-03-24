@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -10,6 +9,7 @@ export interface UseAnomalyApiClientProps {
   updateAnomalyStats: (count: number, impact: number) => void;
   setDownloadFile: (url: string) => void;
   completeProgress: () => void;
+  apiKey?: string | null;
 }
 
 export const useAnomalyApiClient = ({ 
@@ -17,7 +17,8 @@ export const useAnomalyApiClient = ({
   onAnomalyInsightsReceived,
   updateAnomalyStats,
   setDownloadFile,
-  completeProgress
+  completeProgress,
+  apiKey = null
 }: UseAnomalyApiClientProps) => {
 
   const callAnomalyDetectionApi = useCallback(async () => {
@@ -29,13 +30,22 @@ export const useAnomalyApiClient = ({
       const timeoutId = setTimeout(() => controller.abort(), 300000);
       
       try {
+        // Prepare headers with API key if provided
+        const headers: HeadersInit = {
+          'Accept': 'application/json, text/csv, */*',
+          'Cache-Control': 'no-cache'
+        };
+        
+        // Add API key to headers if provided
+        if (apiKey) {
+          headers['X-OpenAI-API-Key'] = apiKey;
+          console.log('Using provided API key for API call');
+        }
+        
         const response = await fetch(`${API_BASE_URL}/test`, {
           method: 'GET',
           signal: controller.signal,
-          headers: {
-            'Accept': 'application/json, text/csv, */*',
-            'Cache-Control': 'no-cache'
-          }
+          headers
         });
         
         clearTimeout(timeoutId);
@@ -172,7 +182,7 @@ export const useAnomalyApiClient = ({
       
       return false;
     }
-  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, updateAnomalyStats, setDownloadFile, completeProgress]);
+  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, updateAnomalyStats, setDownloadFile, completeProgress, apiKey]);
 
   return {
     callAnomalyDetectionApi

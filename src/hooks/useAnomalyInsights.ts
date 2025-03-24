@@ -1,11 +1,18 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { AnomalyItem, InsightResponse, UseAnomalyInsightsProps } from '@/types/anomaly';
 import { API_BASE_URL, getSeverityByBucketId, getCategoryByBucketId, generateSampleRecordsFromCompanies } from '@/utils/anomalyUtils';
 import { useAnomalyContext } from '@/context/AnomalyContext';
 
-export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsightsProps = {}) => {
+export interface UseAnomalyInsightsProps {
+  onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
+  apiKey?: string | null;
+}
+
+export const useAnomalyInsights = ({ 
+  onAnomalyInsightsReceived,
+  apiKey = null 
+}: UseAnomalyInsightsProps = {}) => {
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [insightsData, setInsightsData] = useState<InsightResponse[]>([]);
   const [totalAnomalies, setTotalAnomalies] = useState<number>(0);
@@ -20,7 +27,10 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
     setInsightsData([]);
   }, []);
 
-  const generateInsights = useCallback(async () => {
+  const generateInsights = useCallback(async (customApiKey?: string | null) => {
+    // Use custom API key if provided, otherwise use the one from props
+    const keyToUse = customApiKey || apiKey;
+    
     // Increment request ID to force a fresh response
     setRequestId(prev => prev + 1);
     console.log(`Generating insights - request #${requestId + 1}`);
@@ -41,14 +51,23 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
         // Call the real API endpoint with error handling
         console.log('Fetching insights from API:', `${API_BASE_URL}/insights`);
         
+        // Prepare headers with API key if provided
+        const headers: HeadersInit = {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        };
+        
+        // Add API key to headers if provided
+        if (keyToUse) {
+          headers['X-OpenAI-API-Key'] = keyToUse;
+          console.log('Using provided API key for insights generation');
+        }
+        
         // Using fetch with timeout and request ID to ensure fresh data
         const response = await fetch(`${API_BASE_URL}/insights?req=${requestId}`, {
           method: 'GET',
           signal: controller.signal,
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache, no-store, must-revalidate'
-          }
+          headers
         });
         
         clearTimeout(timeoutId);
@@ -250,7 +269,8 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
     requestId, 
     resetInsightsData, 
     updateAnomalyStats,
-    updateInsightsData
+    updateInsightsData,
+    apiKey
   ]);
 
   return {

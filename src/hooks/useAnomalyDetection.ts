@@ -8,10 +8,19 @@ import { useAnomalyFileDownload } from './useAnomalyFileDownload';
 import { useAnomalyStats } from './useAnomalyStats';
 import { useAnomalyApiClient } from './useAnomalyApiClient';
 
+// Update the interface to include optional apiKey
+export interface UseAnomalyDetectionProps {
+  onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
+  onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
+  onAnomalyStatsChange?: (count: number, impact: number) => void;
+  apiKey?: string | null;
+}
+
 export const useAnomalyDetection = ({ 
   onAnomalyDataReceived, 
   onAnomalyInsightsReceived,
-  onAnomalyStatsChange
+  onAnomalyStatsChange,
+  apiKey = null
 }: UseAnomalyDetectionProps = {}) => {
   const [isDetecting, setIsDetecting] = useState(false);
   
@@ -34,6 +43,7 @@ export const useAnomalyDetection = ({
     insightsData 
   } = useAnomalyInsights({ 
     onAnomalyInsightsReceived,
+    apiKey
   });
 
   // API client hook with enhanced callback handling
@@ -42,7 +52,8 @@ export const useAnomalyDetection = ({
     onAnomalyInsightsReceived,
     updateAnomalyStats,
     setDownloadFile,
-    completeProgress
+    completeProgress,
+    apiKey
   });
 
   // Main function to detect anomalies
@@ -56,12 +67,19 @@ export const useAnomalyDetection = ({
     }
   }, [callAnomalyDetectionApi]);
 
+  // Allow passing apiKey directly to generateInsights
+  const generateInsightsWithKey = useCallback((key?: string) => {
+    // Use provided key or fallback to the one from props
+    const keyToUse = key || apiKey;
+    return generateInsights(keyToUse);
+  }, [generateInsights, apiKey]);
+
   return {
     isDetecting,
     isGeneratingInsights,
     resultFile,
     detectAnomalies,
-    generateInsights,
+    generateInsights: generateInsightsWithKey,
     downloadFile,
     progress,
     hasAnomalies,
