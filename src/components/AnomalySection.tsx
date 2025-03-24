@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -188,9 +187,7 @@ const AnomalySection = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
-  const [localAnomalyCount, setLocalAnomalyCount] = useState(0);
-  const [localImpactValue, setLocalImpactValue] = useState(0);
-  const [renderKey, setRenderKey] = useState(0); // Add a key to force re-render
+  const [renderCounter, setRenderCounter] = useState(0);
 
   const { 
     totalAnomaliesCount, 
@@ -230,17 +227,17 @@ const AnomalySection = () => {
       });
       
       setDisplayData(transformedData);
+      
+      setRenderCounter(prev => prev + 1);
     }
   });
 
-  // Update local state from hook values whenever they change
   useEffect(() => {
-    console.log('Setting local state from hook values:', { totalAnomaliesCount, totalImpactValue });
-    setLocalAnomalyCount(totalAnomaliesCount || 0);
-    setLocalImpactValue(totalImpactValue || 0);
-    
-    // Force re-render when values change
-    setRenderKey(prev => prev + 1);
+    console.log('AnomalySection: Anomaly stats changed, forcing update:', { 
+      totalAnomaliesCount, 
+      totalImpactValue
+    });
+    setRenderCounter(prev => prev + 1);
   }, [totalAnomaliesCount, totalImpactValue]);
 
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
@@ -260,26 +257,22 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  const formattedTotalImpact = localImpactValue !== 0
-    ? `$${Math.abs(localImpactValue).toLocaleString()}`
+  const formattedTotalImpact = totalImpactValue !== 0
+    ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00';
   
   const resolutionRate = anomaliesData.length > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
 
-  // Debug log
   useEffect(() => {
-    console.log('AnomalySection debug - localAnomalyCount:', localAnomalyCount);
-    console.log('AnomalySection debug - localImpactValue:', localImpactValue);
-    console.log('AnomalySection debug - Formatted values for cards:', {
-      totalAnomalies: localAnomalyCount,
-      formattedTotalImpact,
-      resolutionRate,
-      resolvedCount,
-      totalCount: anomaliesData.length
+    console.log('AnomalySection render update:', {
+      renderCounter,
+      totalAnomaliesCount,
+      totalImpactValue,
+      formattedTotalImpact
     });
-  }, [localAnomalyCount, localImpactValue, formattedTotalImpact, resolutionRate, resolvedCount, anomaliesData.length]);
+  }, [renderCounter, totalAnomaliesCount, totalImpactValue, formattedTotalImpact]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -331,10 +324,9 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Use the render key to force re-render on state changes */}
         <AnomalySummaryCards 
-          key={`summary-${renderKey}-${localAnomalyCount}-${localImpactValue}`}
-          totalAnomalies={localAnomalyCount}
+          key={`summary-${renderCounter}-${totalAnomaliesCount}-${totalImpactValue}`}
+          totalAnomalies={totalAnomaliesCount}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}

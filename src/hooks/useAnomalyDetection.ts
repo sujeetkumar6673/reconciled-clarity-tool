@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -52,25 +51,11 @@ export const useAnomalyDetection = ({
       }
     };
   }, [isDetecting, progress]);
-
+  
   // Debug logging for state changes
   useEffect(() => {
     console.log("useAnomalyDetection - State updated:", { totalAnomaliesCount, totalImpactValue });
   }, [totalAnomaliesCount, totalImpactValue]);
-
-  const setAnomalyStats = useCallback((count: number, impact: number) => {
-    console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
-    setTotalAnomaliesCount(count);
-    setTotalImpactValue(impact);
-    
-    // Force a small delay to ensure state updates are processed
-    setTimeout(() => {
-      console.log("Delayed state check:", { 
-        totalAnomaliesCount: count, 
-        totalImpactValue: impact 
-      });
-    }, 50);
-  }, []);
 
   const detectAnomalies = useCallback(async () => {
     setIsDetecting(true);
@@ -136,7 +121,8 @@ export const useAnomalyDetection = ({
                 console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
                 
                 // Update anomaly stats first, then call the callback
-                setAnomalyStats(anomaliesCount, 0);
+                setTotalAnomaliesCount(anomaliesCount);
+                setTotalImpactValue(0);
                 
                 // Small delay before calling callback to ensure state is updated
                 setTimeout(() => {
@@ -168,11 +154,13 @@ export const useAnomalyDetection = ({
               console.log(`Received anomaly_count: ${count}`);
               console.log(`Received total_impact: ${impact}`);
               
-              // IMPORTANT: Update state immediately and wait before processing data
-              setAnomalyStats(count, impact);
+              // Update the state immediately
+              setTotalAnomaliesCount(count);
+              setTotalImpactValue(impact);
               
-              // Process the data with a delay to ensure state updates first
+              // Process the data after state is updated
               if (result.data && Array.isArray(result.data)) {
+                // Wait for state to update before calling callbacks
                 setTimeout(() => {
                   if (onAnomalyDataReceived) {
                     // Transform the data to match the expected format
@@ -191,14 +179,11 @@ export const useAnomalyDetection = ({
                     
                     onAnomalyDataReceived(jsonData, headers);
                   }
-                }, 300); // Longer delay to ensure state updates
+                }, 500); // Use a longer delay to ensure state updates first
                 
                 setHasAnomalies(result.data.length > 0);
                 
-                // Use either the anomaly_count from the response or the length of the data array
-                const anomalyCount = count || result.data.length;
-                
-                toast.success(`Anomaly detection completed! Found ${anomalyCount} anomalies.`);
+                toast.success(`Anomaly detection completed! Found ${count} anomalies.`);
               } else {
                 throw new Error('Invalid data structure in API response');
               }
@@ -228,7 +213,7 @@ export const useAnomalyDetection = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, setAnomalyStats]);
+  }, [onAnomalyDataReceived, onAnomalyInsightsReceived]);
 
   const downloadFile = () => {
     if (resultFile) {
