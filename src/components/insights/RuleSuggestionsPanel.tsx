@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -30,11 +29,13 @@ interface RuleSuggestion {
 interface RuleSuggestionsPanelProps {
   suggestions: RuleSuggestion[];
   isLoading: boolean;
+  onIssueFixed?: (tradeId: number, matchStatus: string, updatedData: any) => void;
 }
 
 const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({ 
   suggestions, 
-  isLoading 
+  isLoading,
+  onIssueFixed 
 }) => {
   const [processingTrades, setProcessingTrades] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,7 +81,7 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
         updateData[`${source.charAt(0).toUpperCase() + source.slice(1)}_PRICE`] = (Math.random() * 100 + 50).toFixed(2);
       }
       
-      // Call the API with the correct endpoint and data format - removed "recon/" prefix
+      // Call the API with the correct endpoint and data format
       const response = await fetch(`${API_BASE_URL}/update-row?source=${source}&trade_id=${tradeId}`, {
         method: 'POST',
         headers: {
@@ -95,13 +96,40 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
       
       const result = await response.json();
       toast.success(result.message || `Successfully updated Trade ID: ${tradeId}`);
+      
+      // Call the callback with the updated data
+      if (onIssueFixed) {
+        onIssueFixed(tradeId, matchStatus || '', {
+          tradeId,
+          source,
+          updateData,
+          matchStatus
+        });
+      }
     } catch (error) {
       console.error('Error fixing issue:', error);
       toast.error(`Failed to fix issue: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // For demo purposes, show success even when API fails
+      // For demo purposes, show success even when API fails and create mock data to update UI
       setTimeout(() => {
         toast.success(`Trade ID: ${tradeId} updated successfully (DEMO)`);
+        
+        // Create mock update data
+        const mockSource = matchStatus?.toLowerCase().includes('impact_only') ? 'impact' : 'catalyst';
+        const mockUpdateData: Record<string, any> = {
+          [`${mockSource.charAt(0).toUpperCase() + mockSource.slice(1)}_PRICE`]: (Math.random() * 100 + 50).toFixed(2),
+          [`${mockSource.charAt(0).toUpperCase() + mockSource.slice(1)}_QUANTITY`]: Math.floor(Math.random() * 1000)
+        };
+        
+        // Call the callback with the mock updated data
+        if (onIssueFixed) {
+          onIssueFixed(tradeId, matchStatus || '', {
+            tradeId,
+            source: mockSource,
+            updateData: mockUpdateData,
+            matchStatus
+          });
+        }
       }, 1000);
     } finally {
       setProcessingTrades(prev => ({ ...prev, [tradeKey]: false }));
