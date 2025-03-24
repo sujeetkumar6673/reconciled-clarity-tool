@@ -54,3 +54,9 @@ export interface UseAnomalyDetectionProps {
   onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
   onAnomalyStatsChange?: (count: number, impact: number) => void;
 }
+
+// Props for the anomaly insights hook
+export interface UseAnomalyInsightsProps {
+  onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
+  forceRefresh?: boolean;
+}

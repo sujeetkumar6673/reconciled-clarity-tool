@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Brain, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,7 @@ interface InsightsListProps {
     category: string;
     content?: string;
   }>;
-  selectedInsightId: number;
+  selectedInsightId: number | null;
   onSelectInsight: (insight: any) => void;
   onGenerateMore: () => void;
   loading: boolean;
@@ -29,6 +29,16 @@ const InsightsList: React.FC<InsightsListProps> = ({
   loading,
   totalAnomalies = 0
 }) => {
+  // Log props changes for debugging
+  useEffect(() => {
+    console.log('InsightsList received props:', {
+      insightsCount: insights.length,
+      selectedInsightId,
+      loading,
+      totalAnomalies
+    });
+  }, [insights, selectedInsightId, loading, totalAnomalies]);
+
   return (
     <Card className="glass-card h-full">
       <CardHeader>
@@ -45,15 +55,16 @@ const InsightsList: React.FC<InsightsListProps> = ({
       <CardContent className="p-0">
         <ScrollArea className="px-6 h-[400px]">
           <div className="space-y-2">
-            {insights.map((insight) => (
-              <InsightItem
-                key={insight.id}
-                insight={insight}
-                isSelected={selectedInsightId === insight.id}
-                onSelect={() => onSelectInsight(insight)}
-              />
-            ))}
-            {insights.length === 0 && (
+            {insights.length > 0 ? (
+              insights.map((insight) => (
+                <InsightItem
+                  key={`insight-${insight.id}`}
+                  insight={insight}
+                  isSelected={selectedInsightId === insight.id}
+                  onSelect={() => onSelectInsight(insight)}
+                />
+              ))
+            ) : (
               <div className="text-center py-8 text-muted-foreground">
                 No insights available. Click the button below to generate insights.
               </div>

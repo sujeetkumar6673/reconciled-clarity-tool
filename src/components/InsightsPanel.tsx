@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Lightbulb, MessageSquare, Brain, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { mockInsights, suggestedActions } from '@/data/insightsData';
@@ -13,25 +13,19 @@ const InsightsPanel = () => {
   const [insights, setInsights] = useState<any[]>([]);
   const [selectedInsight, setSelectedInsight] = useState<any>(null);
   const [totalAnomalies, setTotalAnomalies] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key to force re-rendering
   
-  const { 
-    isGeneratingInsights, 
-    generateInsights, 
-    totalAnomalies: apiTotalAnomalies 
-  } = useAnomalyInsights({
-    onAnomalyInsightsReceived: (anomalies: AnomalyItem[]) => {
-      console.log(`Received ${anomalies.length} anomaly insights for display`);
-      
-      // Use the total from the API response instead of calculating it
-      setTotalAnomalies(apiTotalAnomalies);
-      
-      // Convert AnomalyItems to the insight format needed for display
-      const formattedInsights = anomalies.map(anomaly => ({
-        id: anomaly.id,
-        title: anomaly.title,
-        description: anomaly.description,
-        category: anomaly.category,
-        content: `
+  // Create a callback for processing received insights
+  const handleInsightsReceived = useCallback((anomalies: AnomalyItem[]) => {
+    console.log(`Received ${anomalies.length} anomaly insights for display`);
+    
+    // Convert AnomalyItems to the insight format needed for display
+    const formattedInsights = anomalies.map(anomaly => ({
+      id: anomaly.id,
+      title: anomaly.title,
+      description: anomaly.description,
+      category: anomaly.category,
+      content: `
 Bucket ID: ${anomaly.bucket?.split(':')[0].replace('Bucket ', '')}
 Anomaly Count: ${anomaly.anomalyCount || 0}
 Severity: ${anomaly.severity}
@@ -45,17 +39,26 @@ ${anomaly.suggestedActions?.join('\n') || 'No suggested actions available'}
 
 Sample Companies:
 ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample companies available'}
-        `.trim()
-      }));
-      
-      if (formattedInsights.length > 0) {
-        setInsights(formattedInsights);
-        setSelectedInsight(formattedInsights[0]);
-      }
+      `.trim()
+    }));
+    
+    if (formattedInsights.length > 0) {
+      console.log('Setting formatted insights:', formattedInsights.length);
+      setInsights(formattedInsights);
+      setSelectedInsight(formattedInsights[0]);
+      setRefreshKey(prev => prev + 1); // Force re-render after setting insights
     }
+  }, []);
+  
+  const { 
+    isGeneratingInsights, 
+    generateInsights, 
+    totalAnomalies: apiTotalAnomalies 
+  } = useAnomalyInsights({
+    onAnomalyInsightsReceived: handleInsightsReceived
   });
 
-  // Initialize with empty insights instead of mock data
+  // Initialize with empty insights
   useEffect(() => {
     setInsights([]);
     setSelectedInsight(null);
@@ -64,9 +67,20 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
   // Update total anomalies whenever apiTotalAnomalies changes
   useEffect(() => {
     if (apiTotalAnomalies > 0) {
+      console.log('Updating total anomalies from API:', apiTotalAnomalies);
       setTotalAnomalies(apiTotalAnomalies);
     }
   }, [apiTotalAnomalies]);
+
+  // Log state changes for debugging
+  useEffect(() => {
+    console.log('InsightsPanel state updated:', { 
+      insightsCount: insights.length, 
+      selectedInsightId: selectedInsight?.id,
+      totalAnomalies,
+      refreshKey
+    });
+  }, [insights, selectedInsight, totalAnomalies, refreshKey]);
 
   const handleCopyInsight = () => {
     if (selectedInsight) {
@@ -76,6 +90,7 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
   };
 
   const handleGenerateMoreInsights = () => {
+    console.log('Generating more insights...');
     generateInsights();
   };
 
@@ -119,6 +134,7 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
         {/* Left column - Insight list */}
         <div className="lg:col-span-1 animate-fade-in animate-delay-100">
           <InsightsList 
+            key={`insights-list-${refreshKey}`} // Force re-render when refreshKey changes
             insights={insights}
             selectedInsightId={selectedInsight?.id}
             onSelectInsight={setSelectedInsight}
@@ -133,6 +149,7 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
           {/* Selected insight */}
           {selectedInsight ? (
             <InsightContent
+              key={`insight-content-${selectedInsight.id}-${refreshKey}`} // Force re-render when insight or refreshKey changes
               insight={selectedInsight}
               renderInsightIcon={renderInsightIcon}
               onCopy={handleCopyInsight}

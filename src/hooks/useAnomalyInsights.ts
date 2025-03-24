@@ -1,20 +1,29 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { AnomalyItem, InsightResponse } from '@/types/anomaly';
+import { AnomalyItem, InsightResponse, UseAnomalyInsightsProps } from '@/types/anomaly';
 import { API_BASE_URL, getSeverityByBucketId, getCategoryByBucketId, generateSampleRecordsFromCompanies } from '@/utils/anomalyUtils';
-
-interface UseAnomalyInsightsProps {
-  onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
-}
 
 export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsightsProps = {}) => {
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [insightsData, setInsightsData] = useState<InsightResponse[]>([]);
   const [totalAnomalies, setTotalAnomalies] = useState<number>(0);
   const [totalImpact, setTotalImpact] = useState<number>(0);
+  const [requestId, setRequestId] = useState<number>(0); // Add an incremental request ID to force new data
 
-  const generateInsights = async () => {
+  // Reset insights data (used when generating new insights)
+  const resetInsightsData = useCallback(() => {
+    setInsightsData([]);
+  }, []);
+
+  const generateInsights = useCallback(async () => {
+    // Increment request ID to force a fresh response
+    setRequestId(prev => prev + 1);
+    console.log(`Generating insights - request #${requestId + 1}`);
+    
+    // Reset insights data before generating new ones
+    resetInsightsData();
+    
     setIsGeneratingInsights(true);
     
     try {
@@ -28,13 +37,13 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
         // Call the real API endpoint with error handling
         console.log('Fetching insights from API:', `${API_BASE_URL}/insights`);
         
-        // Using fetch with timeout
-        const response = await fetch(`${API_BASE_URL}/insights`, {
+        // Using fetch with timeout and request ID to ensure fresh data
+        const response = await fetch(`${API_BASE_URL}/insights?req=${requestId}`, {
           method: 'GET',
           signal: controller.signal,
           headers: {
             'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
           }
         });
         
@@ -218,18 +227,17 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
       } else {
         toast.error(`Failed to generate insights: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
-      
-      // No fallback to mock data as per user request
     } finally {
       setIsGeneratingInsights(false);
     }
-  };
+  }, [insightsData, onAnomalyInsightsReceived, requestId, resetInsightsData]);
 
   return {
     isGeneratingInsights,
     generateInsights,
     insightsData,
     totalAnomalies,
-    totalImpact
+    totalImpact,
+    resetInsightsData
   };
 };
