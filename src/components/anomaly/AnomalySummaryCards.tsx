@@ -20,7 +20,13 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
 }) => {
   // Debug log to see what values are being passed to the component
   useEffect(() => {
-    console.log('AnomalySummaryCards renders with props:', { totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount });
+    console.log('AnomalySummaryCards renders with props:', { 
+      totalAnomalies, 
+      totalImpact, 
+      resolutionRate, 
+      resolvedCount, 
+      totalCount 
+    });
   }, [totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount]);
 
   return (

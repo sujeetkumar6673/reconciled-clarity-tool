@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -115,8 +116,9 @@ export const useAnomalyDetection = ({
                 );
                 
                 // Set the anomaly count based on the filtered data
-                setTotalAnomaliesCount(filteredData.length);
-                console.log(`Setting totalAnomaliesCount to ${filteredData.length}`);
+                const anomaliesCount = filteredData.length;
+                setTotalAnomaliesCount(anomaliesCount);
+                console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
                 
                 onAnomalyDataReceived(filteredData, headers);
               }
@@ -136,7 +138,7 @@ export const useAnomalyDetection = ({
             
             // Extract data from the API response
             if (result) {
-              // Important: Update totalAnomaliesCount and totalImpactValue immediately
+              // Immediately update totalAnomaliesCount and totalImpactValue
               if (typeof result.anomaly_count === 'number') {
                 console.log(`Received anomaly_count: ${result.anomaly_count}`);
                 setTotalAnomaliesCount(result.anomaly_count);
@@ -163,12 +165,6 @@ export const useAnomalyDetection = ({
                   const headers = result.data.length > 0 
                     ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
                     : [];
-                  
-                  // Set the anomaly count based on the JSON data if not already set from API response
-                  if (typeof result.anomaly_count !== 'number' && jsonData.length > 0) {
-                    console.log(`Setting anomaly count from jsonData.length: ${jsonData.length}`);
-                    setTotalAnomaliesCount(jsonData.length);
-                  }
                   
                   onAnomalyDataReceived(jsonData, headers);
                 }
