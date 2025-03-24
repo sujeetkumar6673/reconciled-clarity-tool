@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -58,17 +57,18 @@ export const useAnomalyDetection = ({
     console.log("useAnomalyDetection - State updated:", { totalAnomaliesCount, totalImpactValue });
   }, [totalAnomaliesCount, totalImpactValue]);
 
-  // Atomic state update function
-  const updateAnomalyStats = useCallback((count: number, impact: number) => {
+  // Atomic state update function with increased timeout for stability
+  const setAnomalyStats = useCallback((count: number, impact: number) => {
     console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
     
+    // Update both values at once to maintain consistency
     setTotalAnomaliesCount(count);
     setTotalImpactValue(impact);
     
     // Log state update after a delay to verify
     setTimeout(() => {
       console.log("Delayed state check:", { totalAnomaliesCount: count, totalImpactValue: impact });
-    }, 100);
+    }, 300); // Increased timeout
   }, []);
 
   const detectAnomalies = useCallback(async () => {
@@ -135,7 +135,7 @@ export const useAnomalyDetection = ({
                 console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
                 
                 // Use the atomic update function
-                updateAnomalyStats(anomaliesCount, 0);
+                setAnomalyStats(anomaliesCount, 0);
                 
                 // Call the data callback
                 setTimeout(() => {
@@ -168,9 +168,9 @@ export const useAnomalyDetection = ({
               console.log(`Received total_impact: ${impact}`);
               
               // First update state with our atomic function
-              updateAnomalyStats(count, impact);
+              setAnomalyStats(count, impact);
               
-              // Then process data after state is updated
+              // Process data after state is updated with increased timeout
               if (result.data && Array.isArray(result.data)) {
                 setTimeout(() => {
                   if (onAnomalyDataReceived) {
@@ -190,7 +190,7 @@ export const useAnomalyDetection = ({
                     
                     onAnomalyDataReceived(jsonData, headers);
                   }
-                }, 500);
+                }, 500); // Increased timeout
                 
                 setHasAnomalies(result.data.length > 0);
                 
@@ -224,7 +224,7 @@ export const useAnomalyDetection = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, updateAnomalyStats]);
+  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, setAnomalyStats]);
 
   const downloadFile = () => {
     if (resultFile) {

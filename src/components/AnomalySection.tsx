@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -187,14 +188,52 @@ const AnomalySection = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
-  const [renderKey, setRenderKey] = useState(Date.now());
+  const [renderCounter, setRenderCounter] = useState(0);
   
-  const [stats, setStats] = useState({
+  // Localized state for anomaly stats to ensure UI updates
+  const [anomalyStats, setAnomalyStats] = useState({
     anomalyCount: 0,
     impactValue: 0,
     resolvedCount: 0,
     totalCount: 5
   });
+
+  // Callback to update anomaly data received from detection
+  const handleAnomalyDataReceived = useCallback((data: DynamicColumnData[], headers: string[]) => {
+    console.log('handleAnomalyDataReceived called with data length:', data.length);
+    
+    const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
+      return {
+        id: Number(item.id?.replace('anomaly-', '')) || index,
+        title: item.title as string || `Anomaly ${index + 1}`,
+        description: item.description as string || 'No description available',
+        severity: item.severity as string || 'medium',
+        category: item.category as string || 'unclassified',
+        date: item.date as string || new Date().toISOString().split('T')[0],
+        impact: item.impact as string || '$0.00',
+        status: item.status as string || 'unresolved',
+        bucket: item.bucket as string,
+        anomalyCount: typeof item.anomalyCount === 'number' 
+          ? item.anomalyCount 
+          : typeof item.anomalyCount === 'string' 
+            ? parseInt(item.anomalyCount, 10) 
+            : undefined,
+        rootCauses: Array.isArray(item.rootCauses) 
+          ? item.rootCauses as string[] 
+          : undefined,
+        suggestedActions: Array.isArray(item.suggestedActions) 
+          ? item.suggestedActions as string[] 
+          : undefined,
+        sampleRecords: Array.isArray(item.sampleRecords) 
+          ? item.sampleRecords 
+          : undefined,
+      };
+    });
+    
+    setDisplayData(transformedData);
+    // Force a re-render
+    setRenderCounter(prev => prev + 1);
+  }, []);
 
   const { 
     totalAnomaliesCount, 
@@ -202,58 +241,33 @@ const AnomalySection = () => {
     detectAnomalies,
     isDetecting
   } = useAnomalyDetection({
-    onAnomalyDataReceived: (data, headers) => {
-      console.log('onAnomalyDataReceived called with data length:', data.length);
-      
-      const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
-        return {
-          id: Number(item.id?.replace('anomaly-', '')) || index,
-          title: item.title as string || `Anomaly ${index + 1}`,
-          description: item.description as string || 'No description available',
-          severity: item.severity as string || 'medium',
-          category: item.category as string || 'unclassified',
-          date: item.date as string || new Date().toISOString().split('T')[0],
-          impact: item.impact as string || '$0.00',
-          status: item.status as string || 'unresolved',
-          bucket: item.bucket as string,
-          anomalyCount: typeof item.anomalyCount === 'number' 
-            ? item.anomalyCount 
-            : typeof item.anomalyCount === 'string' 
-              ? parseInt(item.anomalyCount, 10) 
-              : undefined,
-          rootCauses: Array.isArray(item.rootCauses) 
-            ? item.rootCauses as string[] 
-            : undefined,
-          suggestedActions: Array.isArray(item.suggestedActions) 
-            ? item.suggestedActions as string[] 
-            : undefined,
-          sampleRecords: Array.isArray(item.sampleRecords) 
-            ? item.sampleRecords 
-            : undefined,
-        };
-      });
-      
-      setDisplayData(transformedData);
-      
-      setRenderKey(Date.now());
-    }
+    onAnomalyDataReceived: handleAnomalyDataReceived
   });
 
+  // Update local state whenever the hook values change
   useEffect(() => {
     console.log('Hook values changed:', { totalAnomaliesCount, totalImpactValue });
     
-    if (totalAnomaliesCount !== stats.anomalyCount || 
-        totalImpactValue !== stats.impactValue) {
+    // Only update if values are different to avoid redundant renders
+    if (totalAnomaliesCount !== anomalyStats.anomalyCount || 
+        totalImpactValue !== anomalyStats.impactValue) {
       
-      setStats(prev => ({
+      setAnomalyStats(prev => ({
         ...prev,
         anomalyCount: totalAnomaliesCount,
         impactValue: totalImpactValue
       }));
       
-      setRenderKey(Date.now());
+      // Force re-render to ensure child components update
+      setRenderCounter(prev => prev + 1);
+      
+      console.log('Updated anomaly stats:', {
+        anomalyCount: totalAnomaliesCount,
+        impactValue: totalImpactValue,
+        renderCounter: renderCounter + 1
+      });
     }
-  }, [totalAnomaliesCount, totalImpactValue, stats.anomalyCount, stats.impactValue]);
+  }, [totalAnomaliesCount, totalImpactValue, anomalyStats.anomalyCount, anomalyStats.impactValue, renderCounter]);
 
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
@@ -272,8 +286,9 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  const formattedTotalImpact = stats.impactValue !== 0
-    ? `$${Math.abs(stats.impactValue).toLocaleString()}`
+  // Format impact value for display
+  const formattedTotalImpact = anomalyStats.impactValue !== 0
+    ? `$${Math.abs(anomalyStats.impactValue).toLocaleString()}`
     : '$0.00';
   
   const resolutionRate = anomaliesData.length > 0 
@@ -331,8 +346,8 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
-          key={`summary-cards-${renderKey}`}
-          totalAnomalies={stats.anomalyCount}
+          key={`summary-cards-${renderCounter}`}
+          totalAnomalies={anomalyStats.anomalyCount}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
@@ -442,7 +457,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
-        <p>Debug: Anomaly Count: {stats.anomalyCount}, Impact: {stats.impactValue}, Render Key: {renderKey}</p>
+        <p>Debug: Anomaly Count: {anomalyStats.anomalyCount}, Impact: {anomalyStats.impactValue}, Render Key: {renderCounter}</p>
       </div>
     </div>
   );

@@ -18,13 +18,16 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   resolvedCount,
   totalCount
 }) => {
-  console.log('AnomalySummaryCards rendering with:', { 
-    totalAnomalies, 
-    totalImpact, 
-    resolutionRate, 
-    resolvedCount, 
-    totalCount 
-  });
+  // Simple memo for debugging
+  React.useEffect(() => {
+    console.log('AnomalySummaryCards rendering with latest props:', { 
+      totalAnomalies, 
+      totalImpact, 
+      resolutionRate, 
+      resolvedCount, 
+      totalCount 
+    });
+  }, [totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount]);
 
   return (
     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-fade-in">
@@ -70,4 +73,4 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   );
 };
 
-export default AnomalySummaryCards;
+export default React.memo(AnomalySummaryCards);
