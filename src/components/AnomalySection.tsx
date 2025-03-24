@@ -9,6 +9,7 @@ import AnomalySummaryCards from './anomaly/AnomalySummaryCards';
 import AnomalyTrendChart from './anomaly/AnomalyTrendChart';
 import AnomalyList from './anomaly/AnomalyList';
 import { AnomalyItem } from './anomaly/AnomalyCard';
+import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 
 // Enhanced mock data for anomalies with AI insights
 const anomalyData: AnomalyItem[] = [
@@ -187,13 +188,27 @@ const AnomalySection = () => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+  const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
+
+  const { 
+    totalAnomaliesCount, 
+    totalImpactValue 
+  } = useAnomalyDetection({
+    onAnomalyDataReceived: (data, headers) => {
+      console.log('Received anomaly data:', data);
+      // Process if needed or store for display
+    }
+  });
+
+  // Use API data or fallback to mock data if needed
+  const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
   // Get unique buckets from the data
   const uniqueBuckets = Array.from(
-    new Set(anomalyData.map(a => a.bucket?.split(':')[0]).filter(Boolean))
+    new Set(anomaliesData.map(a => a.bucket?.split(':')[0]).filter(Boolean))
   );
 
-  const filteredAnomalies = anomalyData.filter(anomaly => {
+  const filteredAnomalies = anomaliesData.filter(anomaly => {
     if (selectedTab === 'high' && anomaly.severity !== 'high') return false;
     if (selectedTab === 'resolved' && anomaly.status !== 'resolved') return false;
     if (selectedTab === 'unresolved' && anomaly.status !== 'unresolved') return false;
@@ -243,9 +258,16 @@ const AnomalySection = () => {
   };
 
   // Calculate summary data
-  const resolvedCount = anomalyData.filter(a => a.status === 'resolved').length;
-  const totalImpact = '$38,973.05';
-  const resolutionRate = '20%';
+  const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
+  
+  // Format total impact for display
+  const formattedTotalImpact = totalImpactValue 
+    ? `$${Math.abs(totalImpactValue).toLocaleString()}`
+    : '$38,973.05'; // Fallback value
+  
+  const resolutionRate = resolvedCount > 0 
+    ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
+    : '20%';
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
@@ -259,11 +281,11 @@ const AnomalySection = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Summary cards */}
         <AnomalySummaryCards 
-          totalAnomalies={anomalyData.length}
-          totalImpact={totalImpact}
+          totalAnomalies={totalAnomaliesCount || anomaliesData.length}
+          totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
-          totalCount={anomalyData.length}
+          totalCount={anomaliesData.length}
         />
 
         {/* Left column - Anomaly Chart */}

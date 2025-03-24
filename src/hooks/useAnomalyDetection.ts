@@ -14,6 +14,8 @@ export const useAnomalyDetection = ({
   const [resultFile, setResultFile] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [hasAnomalies, setHasAnomalies] = useState(false);
+  const [totalAnomaliesCount, setTotalAnomaliesCount] = useState(0);
+  const [totalImpactValue, setTotalImpactValue] = useState(0);
   
   const { 
     isGeneratingInsights, 
@@ -124,30 +126,45 @@ export const useAnomalyDetection = ({
             result = await response.json();
             console.log('Anomaly detection API response:', result);
             
-            if (result && result.data && Array.isArray(result.data)) {
-              // Process JSON data directly
-              if (onAnomalyDataReceived) {
-                // Transform the data to match the expected format
-                const jsonData = result.data.map((item: any, index: number) => ({
-                  id: `anomaly-${index}`,
-                  source: 'Anomaly Detection',
-                  status: 'Unmatched',
-                  dataType: 'anomaly',
-                  ...item
-                }));
-                
-                // Extract headers from the first item if available
-                const headers = result.data.length > 0 
-                  ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
-                  : [];
-                
-                onAnomalyDataReceived(jsonData, headers);
+            // Extract anomaly_count and total_impact directly from response
+            if (result) {
+              // Set total anomalies from the API response
+              if (typeof result.anomaly_count === 'number') {
+                setTotalAnomaliesCount(result.anomaly_count);
+                console.log(`Received anomaly_count: ${result.anomaly_count}`);
               }
               
-              setHasAnomalies(result.data.length > 0);
-              toast.success(`Anomaly detection completed! Found ${result.anomaly_count || result.data.length} anomalies.`);
-            } else {
-              throw new Error('Invalid data structure in API response');
+              // Set total impact from the API response
+              if (typeof result.total_impact === 'number') {
+                setTotalImpactValue(result.total_impact);
+                console.log(`Received total_impact: ${result.total_impact}`);
+              }
+              
+              if (result.data && Array.isArray(result.data)) {
+                // Process JSON data directly
+                if (onAnomalyDataReceived) {
+                  // Transform the data to match the expected format
+                  const jsonData = result.data.map((item: any, index: number) => ({
+                    id: `anomaly-${index}`,
+                    source: 'Anomaly Detection',
+                    status: 'Unmatched',
+                    dataType: 'anomaly',
+                    ...item
+                  }));
+                  
+                  // Extract headers from the first item if available
+                  const headers = result.data.length > 0 
+                    ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
+                    : [];
+                  
+                  onAnomalyDataReceived(jsonData, headers);
+                }
+                
+                setHasAnomalies(result.data.length > 0);
+                toast.success(`Anomaly detection completed! Found ${result.anomaly_count || result.data.length} anomalies.`);
+              } else {
+                throw new Error('Invalid data structure in API response');
+              }
             }
           } catch (jsonError) {
             console.error('Error parsing or processing JSON response:', jsonError);
@@ -196,6 +213,8 @@ export const useAnomalyDetection = ({
     downloadFile,
     progress,
     hasAnomalies,
-    insightsData
+    insightsData,
+    totalAnomaliesCount,
+    totalImpactValue
   };
 };
