@@ -10,8 +10,10 @@ interface AnomalyContextType {
     totalCount: number;
   };
   anomalyData: AnomalyItem[];
+  insightsData: AnomalyItem[];
   updateAnomalyStats: (count: number, impact: number) => void;
   updateAnomalyData: (data: AnomalyItem[]) => void;
+  updateInsightsData: (data: AnomalyItem[]) => void;
   refreshStats: () => void;
 }
 
@@ -23,8 +25,10 @@ const defaultContext: AnomalyContextType = {
     totalCount: 0
   },
   anomalyData: [],
+  insightsData: [],
   updateAnomalyStats: () => {},
   updateAnomalyData: () => {},
+  updateInsightsData: () => {},
   refreshStats: () => {}
 };
 
@@ -40,6 +44,7 @@ export const AnomalyProvider: React.FC<{ children: ReactNode }> = ({ children })
     totalCount: 0
   });
   const [anomalyData, setAnomalyData] = useState<AnomalyItem[]>([]);
+  const [insightsData, setInsightsData] = useState<AnomalyItem[]>([]);
   
   // Use a ref to track previous values and prevent redundant updates
   const prevStatsRef = useRef({ count: 0, impact: 0 });
@@ -77,12 +82,19 @@ export const AnomalyProvider: React.FC<{ children: ReactNode }> = ({ children })
       totalCount: Math.max(data.length, prev.totalCount)
     }));
   }, []);
+  
+  // Update insights data
+  const updateInsightsData = useCallback((data: AnomalyItem[]) => {
+    console.log('AnomalyContext - Updating insights data:', { count: data.length });
+    if (data.length > 0) {
+      setInsightsData(data);
+    }
+  }, []);
 
   // Force refresh of stats - called when refresh button clicked
   const refreshStats = useCallback(() => {
     console.log('AnomalyContext - Forcing refresh of stats');
     // This triggers a re-render in components consuming the context
-    // Instead of creating a new object, we'll just notify listeners about current data
     setAnomalyStats(prev => ({ ...prev }));
   }, []);
 
@@ -90,8 +102,10 @@ export const AnomalyProvider: React.FC<{ children: ReactNode }> = ({ children })
     <AnomalyContext.Provider value={{
       anomalyStats,
       anomalyData,
+      insightsData,
       updateAnomalyStats,
       updateAnomalyData,
+      updateInsightsData,
       refreshStats
     }}>
       {children}

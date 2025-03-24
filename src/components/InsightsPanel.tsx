@@ -13,15 +13,18 @@ import { useAnomalyContext } from '@/context/AnomalyContext';
 const InsightsPanel = () => {
   const [insights, setInsights] = useState<any[]>([]);
   const [selectedInsight, setSelectedInsight] = useState<any>(null);
-  const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key to force re-rendering
+  const [refreshKey, setRefreshKey] = useState(0); // Add a refresh key for force re-rendering
   
-  // Use the anomaly context to get the latest stats
-  const { anomalyStats } = useAnomalyContext();
+  // Use the anomaly context to get the latest stats and insights
+  const { anomalyStats, insightsData, updateInsightsData } = useAnomalyContext();
   const { totalAnomalies: contextTotalAnomalies } = anomalyStats;
   
   // Create a callback for processing received insights
   const handleInsightsReceived = useCallback((anomalies: AnomalyItem[]) => {
     console.log(`Received ${anomalies.length} anomaly insights for display`);
+    
+    // Update the context with the new insights
+    updateInsightsData(anomalies);
     
     // Convert AnomalyItems to the insight format needed for display
     const formattedInsights = anomalies.map(anomaly => ({
@@ -52,7 +55,7 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
       setSelectedInsight(formattedInsights[0]);
       setRefreshKey(prev => prev + 1); // Force re-render after setting insights
     }
-  }, []);
+  }, [updateInsightsData]);
   
   const { 
     isGeneratingInsights, 
@@ -62,24 +65,28 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
     onAnomalyInsightsReceived: handleInsightsReceived
   });
 
-  // Initialize with empty insights
+  // Initialize with insights from context if available
   useEffect(() => {
-    setInsights([]);
-    setSelectedInsight(null);
-  }, []);
+    console.log('InsightsPanel - Checking context insights:', insightsData.length);
+    if (insightsData.length > 0 && insights.length === 0) {
+      console.log('Loading insights from context:', insightsData.length);
+      handleInsightsReceived(insightsData);
+    }
+  }, [insightsData, insights.length, handleInsightsReceived]);
 
   // Update total anomalies whenever context totalAnomalies or apiTotalAnomalies changes
   useEffect(() => {
     console.log('InsightsPanel context update:', { 
       contextTotalAnomalies, 
-      apiTotalAnomalies
+      apiTotalAnomalies,
+      contextInsights: insightsData.length
     });
     
     // Force re-render when context data changes
-    if (contextTotalAnomalies > 0 || apiTotalAnomalies > 0) {
+    if (contextTotalAnomalies > 0 || apiTotalAnomalies > 0 || insightsData.length > 0) {
       setRefreshKey(prev => prev + 1);
     }
-  }, [contextTotalAnomalies, apiTotalAnomalies]);
+  }, [contextTotalAnomalies, apiTotalAnomalies, insightsData]);
 
   // Log state changes for debugging
   useEffect(() => {
@@ -87,9 +94,10 @@ ${anomaly.sampleRecords?.map(record => record.company).join(', ') || 'No sample 
       insightsCount: insights.length, 
       selectedInsightId: selectedInsight?.id,
       totalAnomalies: contextTotalAnomalies || apiTotalAnomalies,
-      refreshKey
+      refreshKey,
+      contextInsightsCount: insightsData.length
     });
-  }, [insights, selectedInsight, contextTotalAnomalies, apiTotalAnomalies, refreshKey]);
+  }, [insights, selectedInsight, contextTotalAnomalies, apiTotalAnomalies, refreshKey, insightsData]);
 
   const handleCopyInsight = () => {
     if (selectedInsight) {

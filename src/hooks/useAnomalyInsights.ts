@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { AnomalyItem, InsightResponse, UseAnomalyInsightsProps } from '@/types/anomaly';
 import { API_BASE_URL, getSeverityByBucketId, getCategoryByBucketId, generateSampleRecordsFromCompanies } from '@/utils/anomalyUtils';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
 export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsightsProps = {}) => {
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
@@ -10,6 +11,9 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
   const [totalAnomalies, setTotalAnomalies] = useState<number>(0);
   const [totalImpact, setTotalImpact] = useState<number>(0);
   const [requestId, setRequestId] = useState<number>(0); // Add an incremental request ID to force new data
+  
+  // Get context functions for updating data
+  const { updateAnomalyStats, updateInsightsData } = useAnomalyContext();
 
   // Reset insights data (used when generating new insights)
   const resetInsightsData = useCallback(() => {
@@ -180,6 +184,11 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
         setTotalAnomalies(totalAnomaliesCount);
         setTotalImpact(totalImpactValue);
         
+        // Update the anomaly stats in the context
+        if (totalAnomaliesCount > 0) {
+          updateAnomalyStats(totalAnomaliesCount, totalImpactValue);
+        }
+        
         // If no insights data is returned, show error message
         if (!insightsArray || insightsArray.length === 0) {
           console.warn('No insights data returned from API');
@@ -208,6 +217,11 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
           
           // Log the number of anomaly items being passed
           console.log(`Passing ${anomalyItems.length} anomaly items with ${totalAnomaliesCount} total anomalies to callback`);
+          
+          // Update the insights data in the context
+          updateInsightsData(anomalyItems);
+          
+          // Call the callback
           onAnomalyInsightsReceived(anomalyItems);
         }
         
@@ -230,7 +244,14 @@ export const useAnomalyInsights = ({ onAnomalyInsightsReceived }: UseAnomalyInsi
     } finally {
       setIsGeneratingInsights(false);
     }
-  }, [insightsData, onAnomalyInsightsReceived, requestId, resetInsightsData]);
+  }, [
+    insightsData, 
+    onAnomalyInsightsReceived, 
+    requestId, 
+    resetInsightsData, 
+    updateAnomalyStats,
+    updateInsightsData
+  ]);
 
   return {
     isGeneratingInsights,
