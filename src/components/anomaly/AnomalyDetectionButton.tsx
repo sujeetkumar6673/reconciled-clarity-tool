@@ -1,7 +1,6 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Download, Sparkles, Brain } from 'lucide-react';
+import { AlertTriangle, Download, Sparkles, Brain, RefreshCw } from 'lucide-react';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { Progress } from '@/components/ui/progress';
@@ -37,7 +36,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     onAnomalyStatsChange
   });
 
-  // Force refresh of stats when totalAnomaliesCount or totalImpactValue changes
   useEffect(() => {
     console.log('AnomalyDetectionButton - Stats detected:', { totalAnomaliesCount, totalImpactValue });
     if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
@@ -45,7 +43,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     }
   }, [totalAnomaliesCount, totalImpactValue, refreshStats]);
 
-  // Handle stats update separately
   const handleUpdateStats = () => {
     if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
       console.log('Manually updating stats from button click');
@@ -56,16 +53,13 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     }
   };
 
-  // Generate insights with explicit stats update
   const handleGenerateInsights = () => {
     generateInsights();
-    // Force refresh stats after a delay to ensure UI updates
     setTimeout(() => {
       refreshStats();
     }, 500);
   };
 
-  // Loading spinner component
   const LoadingSpinner = () => (
     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -75,7 +69,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* Anomaly Detection Button */}
       <Button
         onClick={detectAnomalies}
         disabled={isDetecting}
@@ -95,7 +88,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
         )}
       </Button>
       
-      {/* Stats Update Button - New */}
       {hasAnomalies && !isDetecting && (
         <Button
           onClick={handleUpdateStats}
@@ -108,7 +100,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
         </Button>
       )}
       
-      {/* Insights Generation Button - Only show after anomalies are detected */}
       {hasAnomalies && !isDetecting && (
         <Button
           onClick={handleGenerateInsights}
@@ -131,7 +122,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
         </Button>
       )}
       
-      {/* Progress bar */}
       {isDetecting && (
         <div className="w-full max-w-md mt-2 space-y-2">
           <div className="flex items-center justify-between mb-1">
@@ -145,7 +135,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
         </div>
       )}
       
-      {/* Download button */}
       {resultFile && (
         <Button 
           onClick={downloadFile}
