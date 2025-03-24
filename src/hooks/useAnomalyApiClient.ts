@@ -80,43 +80,48 @@ export const useAnomalyApiClient = ({
                 const anomaliesCount = filteredData.length;
                 console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
                 
-                // Update the stats
+                // Update the stats IMMEDIATELY
                 updateAnomalyStats(anomaliesCount, 0);
                 
-                // Call the data callback
+                // Call the data callback with a slight delay to ensure stats are updated first
                 setTimeout(() => {
                   if (onAnomalyDataReceived) {
                     onAnomalyDataReceived(filteredData, headers);
                   }
-                }, 300);
+                }, 50);
               }
             }, 
             onAnomalyInsightsReceived
           );
           
-          updateAnomalyStats(hasData ? 1 : 0, 0); // Set hasAnomalies based on data presence
+          // Set hasAnomalies based on data presence (additional call to ensure visibility)
+          if (hasData) {
+            updateAnomalyStats(1, 0);
+          }
           
           toast.success('Anomaly detection completed with AI insights! CSV file is ready for download.');
         } else {
           // Handle JSON response
-          let result;
           try {
-            result = await response.json();
+            const result = await response.json();
             console.log('Anomaly detection API response:', result);
             
             // Extract data from the API response
             if (result) {
-              // Get the anomaly count and impact values
+              // Get the anomaly count and impact values directly
               const count = typeof result.anomaly_count === 'number' ? result.anomaly_count : 0;
               const impact = typeof result.total_impact === 'number' ? result.total_impact : 0;
               
               console.log(`Received anomaly_count: ${count}`);
               console.log(`Received total_impact: ${impact}`);
               
-              // Direct and immediate state update
+              // CRITICAL: Update stats immediately with values from API
               updateAnomalyStats(count, impact);
               
-              // Process data with increased timeout
+              // Toast to confirm data was received
+              toast.success(`Found ${count} anomalies with total impact of $${Math.abs(impact).toLocaleString()}`);
+              
+              // Process data with delay to ensure stats are updated first
               if (result.data && Array.isArray(result.data)) {
                 setTimeout(() => {
                   if (onAnomalyDataReceived) {
@@ -136,7 +141,7 @@ export const useAnomalyApiClient = ({
                     
                     onAnomalyDataReceived(jsonData, headers);
                   }
-                }, 300);
+                }, 50);
                 
                 toast.success(`Anomaly detection completed! Found ${count} anomalies.`);
               } else {

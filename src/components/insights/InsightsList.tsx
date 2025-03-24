@@ -29,7 +29,7 @@ const InsightsList: React.FC<InsightsListProps> = ({
   loading,
   totalAnomalies = 0
 }) => {
-  // Log props changes for debugging
+  // Enhanced logging for props changes
   useEffect(() => {
     console.log('InsightsList received props:', {
       insightsCount: insights.length,

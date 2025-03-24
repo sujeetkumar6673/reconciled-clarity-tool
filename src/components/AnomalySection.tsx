@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -190,6 +189,7 @@ const AnomalySection = () => {
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const forceUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [localAnomaly, setLocalAnomaly] = useState({
     totalAnomalies: 0,
@@ -244,21 +244,31 @@ const AnomalySection = () => {
     setRefreshKey(prev => prev + 1);
   }, []);
 
-  // Create a separate callback for stats changes
   const handleStatsChange = useCallback((count: number, impact: number) => {
     console.log('AnomalySection - Stats changed:', { count, impact });
     
     const formattedImpact = impact !== 0
       ? `$${Math.abs(impact).toLocaleString()}`
       : '$0.00';
-      
-    setLocalAnomaly(prev => ({
-      ...prev,
-      totalAnomalies: count,
-      totalImpact: formattedImpact
-    }));
     
-    setRefreshKey(prev => prev + 1);
+    setLocalAnomaly(prev => {
+      const newState = {
+        ...prev,
+        totalAnomalies: count,
+        totalImpact: formattedImpact
+      };
+      console.log('Setting localAnomaly state:', newState);
+      return newState;
+    });
+    
+    if (forceUpdateTimeoutRef.current) {
+      clearTimeout(forceUpdateTimeoutRef.current);
+    }
+    
+    forceUpdateTimeoutRef.current = setTimeout(() => {
+      console.log('Forcing refresh after stats change');
+      setRefreshKey(prev => prev + 1);
+    }, 50);
   }, []);
 
   const { 
@@ -271,30 +281,37 @@ const AnomalySection = () => {
     onAnomalyStatsChange: handleStatsChange
   });
 
-  // Also update when hook values change as a backup mechanism
   useEffect(() => {
     console.log('AnomalySection - Hook values updated:', { totalAnomaliesCount, totalImpactValue });
     
-    const formattedImpact = totalImpactValue !== 0
-      ? `$${Math.abs(totalImpactValue).toLocaleString()}`
-      : '$0.00';
+    if (totalAnomaliesCount > 0 || totalImpactValue !== 0) {
+      const formattedImpact = totalImpactValue !== 0
+        ? `$${Math.abs(totalImpactValue).toLocaleString()}`
+        : '$0.00';
       
-    // Force update local state to ensure it matches hook state
-    setLocalAnomaly(prev => {
-      if (prev.totalAnomalies !== totalAnomaliesCount || prev.totalImpact !== formattedImpact) {
-        console.log('Forcing local state update from hook values');
-        return {
-          ...prev,
-          totalAnomalies: totalAnomaliesCount,
-          totalImpact: formattedImpact
-        };
-      }
-      return prev;
-    });
-    
-    // Force a re-render to ensure UI is updated
-    setRefreshKey(prev => prev + 1);
+      setLocalAnomaly(prev => {
+        if (prev.totalAnomalies !== totalAnomaliesCount || prev.totalImpact !== formattedImpact) {
+          console.log('Forcing local state update from hook values');
+          return {
+            ...prev,
+            totalAnomalies: totalAnomaliesCount,
+            totalImpact: formattedImpact
+          };
+        }
+        return prev;
+      });
+      
+      setRefreshKey(prev => prev + 1);
+    }
   }, [totalAnomaliesCount, totalImpactValue]);
+
+  useEffect(() => {
+    return () => {
+      if (forceUpdateTimeoutRef.current) {
+        clearTimeout(forceUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 

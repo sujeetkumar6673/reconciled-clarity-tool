@@ -19,20 +19,24 @@ export const useAnomalyStats = ({ onStatsChange }: UseAnomalyStatsProps = {}) =>
     console.log('useAnomalyStats - State updated:', { totalAnomaliesCount, totalImpactValue });
   }, [totalAnomaliesCount, totalImpactValue]);
 
-  // Atomic state update function for anomaly stats
+  // Simplified state update function for anomaly stats
   const updateAnomalyStats = useCallback((count: number, impact: number) => {
     console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
     
-    // Force state update to be atomic
-    setStats({
+    // Force update with new values directly
+    const newStats = {
       totalAnomaliesCount: count,
       totalImpactValue: impact,
       hasAnomalies: count > 0
-    });
+    };
     
-    // Notify parent component if callback provided
+    setStats(newStats);
+    
+    // Always call the callback if provided to ensure parent components are updated
     if (onStatsChange) {
-      onStatsChange(count, impact);
+      setTimeout(() => {
+        onStatsChange(count, impact);
+      }, 10);
     }
     
     // Log state update with a delay to verify it took effect
