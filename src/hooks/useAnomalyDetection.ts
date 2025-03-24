@@ -51,7 +51,7 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
-  // Force a re-render when totalAnomaliesCount or totalImpactValue changes
+  // Debugging useEffect to track state changes
   useEffect(() => {
     console.log("useAnomalyDetection - State updated:", { totalAnomaliesCount, totalImpactValue });
   }, [totalAnomaliesCount, totalImpactValue]);

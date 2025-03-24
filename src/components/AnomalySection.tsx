@@ -259,7 +259,7 @@ const AnomalySection = () => {
     console.log('AnomalySection - totalAnomaliesCount:', totalAnomaliesCount);
     console.log('AnomalySection - totalImpactValue:', totalImpactValue);
     console.log('Values for AnomalySummaryCards:', {
-      totalAnomalies: totalAnomaliesCount, // Use the direct value without fallback
+      totalAnomalies: totalAnomaliesCount,
       formattedTotalImpact,
       resolutionRate,
       resolvedCount,
@@ -317,7 +317,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Direct prop passing without unnecessary fallbacks */}
+        {/* Pass the values directly to ensure they're always current */}
         <AnomalySummaryCards 
           totalAnomalies={totalAnomaliesCount}
           totalImpact={formattedTotalImpact}
