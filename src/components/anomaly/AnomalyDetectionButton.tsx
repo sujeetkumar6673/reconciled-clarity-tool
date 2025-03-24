@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Download, Sparkles, Brain } from 'lucide-react';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -31,11 +31,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
     onAnomalyDataReceived,
     onAnomalyInsightsReceived
   });
-
-  // Debug hook values
-  useEffect(() => {
-    console.log('AnomalyDetectionButton - hook values:', { totalAnomaliesCount, totalImpactValue });
-  }, [totalAnomaliesCount, totalImpactValue]);
 
   // Loading spinner component
   const LoadingSpinner = () => (
@@ -103,11 +98,6 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
           <Progress value={progress} className="h-2" />
         </div>
       )}
-      
-      {/* Debug display for development */}
-      <div className="text-xs text-gray-500 mt-1">
-        Anomaly stats: {totalAnomaliesCount} anomalies, ${Math.abs(totalImpactValue).toLocaleString()} impact
-      </div>
       
       {/* Download button */}
       {resultFile && (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -187,11 +187,14 @@ const AnomalySection = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
-  const [renderCounter, setRenderCounter] = useState(0);
-  const [localAnomalyCount, setLocalAnomalyCount] = useState(0);
-  const [localImpactValue, setLocalImpactValue] = useState(0);
+  const [renderKey, setRenderKey] = useState(Date.now());
   
-  const prevValuesRef = useRef({ count: 0, impact: 0 });
+  const [stats, setStats] = useState({
+    anomalyCount: 0,
+    impactValue: 0,
+    resolvedCount: 0,
+    totalCount: 5
+  });
 
   const { 
     totalAnomaliesCount, 
@@ -231,32 +234,26 @@ const AnomalySection = () => {
       });
       
       setDisplayData(transformedData);
-      setRenderCounter(prev => prev + 1);
+      
+      setRenderKey(Date.now());
     }
   });
 
   useEffect(() => {
-    if (totalAnomaliesCount !== prevValuesRef.current.count || 
-        totalImpactValue !== prevValuesRef.current.impact) {
+    console.log('Hook values changed:', { totalAnomaliesCount, totalImpactValue });
+    
+    if (totalAnomaliesCount !== stats.anomalyCount || 
+        totalImpactValue !== stats.impactValue) {
       
-      console.log('AnomalySection: Updating local state with new values:', { 
-        totalAnomaliesCount, 
-        totalImpactValue,
-        prevCount: prevValuesRef.current.count,
-        prevImpact: prevValuesRef.current.impact
-      });
+      setStats(prev => ({
+        ...prev,
+        anomalyCount: totalAnomaliesCount,
+        impactValue: totalImpactValue
+      }));
       
-      setLocalAnomalyCount(totalAnomaliesCount);
-      setLocalImpactValue(totalImpactValue);
-      
-      prevValuesRef.current = { 
-        count: totalAnomaliesCount, 
-        impact: totalImpactValue 
-      };
-      
-      setRenderCounter(prev => prev + 1);
+      setRenderKey(Date.now());
     }
-  }, [totalAnomaliesCount, totalImpactValue]);
+  }, [totalAnomaliesCount, totalImpactValue, stats.anomalyCount, stats.impactValue]);
 
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
@@ -275,22 +272,13 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  const formattedTotalImpact = localImpactValue !== 0
-    ? `$${Math.abs(localImpactValue).toLocaleString()}`
+  const formattedTotalImpact = stats.impactValue !== 0
+    ? `$${Math.abs(stats.impactValue).toLocaleString()}`
     : '$0.00';
   
   const resolutionRate = anomaliesData.length > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
-
-  useEffect(() => {
-    console.log('AnomalySection render update:', {
-      renderCounter,
-      hookValues: { totalAnomaliesCount, totalImpactValue },
-      localValues: { localAnomalyCount, localImpactValue },
-      formattedTotalImpact
-    });
-  }, [renderCounter, totalAnomaliesCount, totalImpactValue, localAnomalyCount, localImpactValue, formattedTotalImpact]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -332,8 +320,6 @@ const AnomalySection = () => {
     }
   };
 
-  const summaryCardsKey = `summary-${renderCounter}-${localAnomalyCount}-${localImpactValue}`;
-
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       <div className="mb-8">
@@ -345,8 +331,8 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
-          key={summaryCardsKey}
-          totalAnomalies={localAnomalyCount}
+          key={`summary-cards-${renderKey}`}
+          totalAnomalies={stats.anomalyCount}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
@@ -456,7 +442,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
-        <p>Debug: Anomaly Count: {localAnomalyCount}, Impact: {localImpactValue}, Render: {renderCounter}</p>
+        <p>Debug: Anomaly Count: {stats.anomalyCount}, Impact: {stats.impactValue}, Render Key: {renderKey}</p>
       </div>
     </div>
   );
