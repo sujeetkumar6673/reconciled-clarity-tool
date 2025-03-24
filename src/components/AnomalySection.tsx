@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -189,6 +190,7 @@ const AnomalySection = () => {
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
   const [localAnomalyCount, setLocalAnomalyCount] = useState(0);
   const [localImpactValue, setLocalImpactValue] = useState(0);
+  const [renderKey, setRenderKey] = useState(0); // Add a key to force re-render
 
   const { 
     totalAnomaliesCount, 
@@ -231,10 +233,14 @@ const AnomalySection = () => {
     }
   });
 
+  // Update local state from hook values whenever they change
   useEffect(() => {
     console.log('Setting local state from hook values:', { totalAnomaliesCount, totalImpactValue });
     setLocalAnomalyCount(totalAnomaliesCount || 0);
     setLocalImpactValue(totalImpactValue || 0);
+    
+    // Force re-render when values change
+    setRenderKey(prev => prev + 1);
   }, [totalAnomaliesCount, totalImpactValue]);
 
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
@@ -262,6 +268,7 @@ const AnomalySection = () => {
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
 
+  // Debug log
   useEffect(() => {
     console.log('AnomalySection debug - localAnomalyCount:', localAnomalyCount);
     console.log('AnomalySection debug - localImpactValue:', localImpactValue);
@@ -324,8 +331,9 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Use the render key to force re-render on state changes */}
         <AnomalySummaryCards 
-          key={`summary-${localAnomalyCount}-${localImpactValue}`}
+          key={`summary-${renderKey}-${localAnomalyCount}-${localImpactValue}`}
           totalAnomalies={localAnomalyCount}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}

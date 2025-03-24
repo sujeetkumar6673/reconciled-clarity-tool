@@ -168,11 +168,11 @@ export const useAnomalyDetection = ({
               console.log(`Received anomaly_count: ${count}`);
               console.log(`Received total_impact: ${impact}`);
               
-              // Update state IMMEDIATELY with the values from the API
+              // IMPORTANT: Update state immediately and wait before processing data
               setAnomalyStats(count, impact);
               
+              // Process the data with a delay to ensure state updates first
               if (result.data && Array.isArray(result.data)) {
-                // Process JSON data directly with a delay to ensure state is updated first
                 setTimeout(() => {
                   if (onAnomalyDataReceived) {
                     // Transform the data to match the expected format
@@ -191,7 +191,7 @@ export const useAnomalyDetection = ({
                     
                     onAnomalyDataReceived(jsonData, headers);
                   }
-                }, 100); // Delay to ensure state updates first
+                }, 300); // Longer delay to ensure state updates
                 
                 setHasAnomalies(result.data.length > 0);
                 
