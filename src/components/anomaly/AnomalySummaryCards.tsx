@@ -18,7 +18,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   resolvedCount,
   totalCount
 }) => {
-  // Add useEffect to log when props change
+  // Add debugging to track prop changes
   useEffect(() => {
     console.log('AnomalySummaryCards received new props:', { 
       totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount 
@@ -69,5 +69,4 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   );
 };
 
-// Export without React.memo to ensure updates always propagate
 export default AnomalySummaryCards;

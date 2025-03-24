@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import AnomalyList from './anomaly/AnomalyList';
 import { AnomalyItem } from './anomaly/AnomalyCard';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { DynamicColumnData } from '@/lib/csv-parser';
+import { toast } from 'sonner';
 
 const anomalyData: AnomalyItem[] = [
   { 
@@ -189,8 +189,13 @@ const AnomalySection = () => {
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [localTotalAnomalies, setLocalTotalAnomalies] = useState(0);
-  const [localTotalImpact, setLocalTotalImpact] = useState(0);
+  
+  const [localAnomaly, setLocalAnomaly] = useState({
+    totalAnomalies: 0,
+    totalImpact: '$0.00',
+    resolvedCount: 0,
+    totalCount: 0
+  });
   
   const handleAnomalyDataReceived = useCallback((data: DynamicColumnData[], headers: string[]) => {
     console.log('Anomaly data received with length:', data.length);
@@ -226,12 +231,20 @@ const AnomalySection = () => {
     });
     
     setDisplayData(transformedData);
+    
+    const resolvedCount = transformedData.filter(a => a.status === 'resolved').length;
+    
+    setLocalAnomaly(prev => ({
+      ...prev,
+      totalCount: transformedData.length,
+      resolvedCount
+    }));
+    
     setRefreshKey(prev => prev + 1);
   }, []);
 
-  // Use destructuring to get values from the hook
   const { 
-    totalAnomaliesCount, 
+    totalAnomaliesCount,
     totalImpactValue,
     detectAnomalies,
     isDetecting
@@ -239,12 +252,19 @@ const AnomalySection = () => {
     onAnomalyDataReceived: handleAnomalyDataReceived
   });
 
-  // Add effect to update local state when hook values change
   useEffect(() => {
     console.log('AnomalySection - Hook values updated:', { totalAnomaliesCount, totalImpactValue });
-    setLocalTotalAnomalies(totalAnomaliesCount);
-    setLocalTotalImpact(totalImpactValue);
-    // Force refresh when values change
+    
+    const formattedImpact = totalImpactValue !== 0
+      ? `$${Math.abs(totalImpactValue).toLocaleString()}`
+      : '$0.00';
+      
+    setLocalAnomaly(prev => ({
+      ...prev,
+      totalAnomalies: totalAnomaliesCount,
+      totalImpact: formattedImpact
+    }));
+    
     setRefreshKey(prev => prev + 1);
   }, [totalAnomaliesCount, totalImpactValue]);
 
@@ -262,16 +282,9 @@ const AnomalySection = () => {
     if (selectedBucket && (!anomaly.bucket || !anomaly.bucket.startsWith(selectedBucket))) return false;
     return true;
   });
-
-  const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  // Format impact using local state
-  const formattedTotalImpact = localTotalImpact !== 0
-    ? `$${Math.abs(localTotalImpact).toLocaleString()}`
-    : '$0.00';
-  
-  const resolutionRate = anomaliesData.length > 0 
-    ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
+  const resolutionRate = localAnomaly.totalCount > 0 
+    ? `${Math.round((localAnomaly.resolvedCount / localAnomaly.totalCount) * 100)}%` 
     : '0%';
 
   const getCategoryIcon = (category: string) => {
@@ -326,11 +339,11 @@ const AnomalySection = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
           key={`summary-cards-${refreshKey}`}
-          totalAnomalies={localTotalAnomalies}
-          totalImpact={formattedTotalImpact}
+          totalAnomalies={localAnomaly.totalAnomalies}
+          totalImpact={localAnomaly.totalImpact}
           resolutionRate={resolutionRate}
-          resolvedCount={resolvedCount}
-          totalCount={anomaliesData.length}
+          resolvedCount={localAnomaly.resolvedCount}
+          totalCount={localAnomaly.totalCount}
         />
 
         <AnomalyTrendChart chartData={chartData} />
@@ -436,7 +449,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
-        <p>Debug: Anomaly Count: {localTotalAnomalies}, Impact: {localTotalImpact}, Render Key: {refreshKey}</p>
+        <p>Debug: Anomaly Count: {localAnomaly.totalAnomalies}, Impact: {localAnomaly.totalImpact}, Render Key: {refreshKey}</p>
       </div>
     </div>
   );

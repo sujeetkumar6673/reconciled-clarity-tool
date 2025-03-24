@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -71,18 +72,18 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
-  // Clear and direct state update function
+  // Atomic state update function for anomaly stats
   const updateAnomalyStats = useCallback((count: number, impact: number) => {
     console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
     
-    // Atomic state update
+    // Force state update to be atomic
     setState(prev => ({
       ...prev,
       totalAnomaliesCount: count,
       totalImpactValue: impact
     }));
     
-    // Log state update with a delay to see if it took effect
+    // Log state update with a delay to verify it took effect
     setTimeout(() => {
       console.log("Delayed state check:", { totalAnomaliesCount: count, totalImpactValue: impact });
     }, 500);
@@ -184,7 +185,7 @@ export const useAnomalyDetection = ({
               console.log(`Received anomaly_count: ${count}`);
               console.log(`Received total_impact: ${impact}`);
               
-              // Direct state update
+              // Direct and immediate state update
               updateAnomalyStats(count, impact);
               
               // Process data with increased timeout
