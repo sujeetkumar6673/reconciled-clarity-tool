@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -56,7 +55,6 @@ const SplitFileAnalysis = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900">
       <Navbar />
       
-      {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 relative">
         <div className={`max-w-6xl mx-auto text-center transition-all duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0 transform translate-y-10'}`}>
           <div className="inline-block mb-4">
@@ -65,7 +63,7 @@ const SplitFileAnalysis = () => {
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300">
-            Split File Analysis
+            Catalyst vs Impact Reconciliation
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
             Process pre-analyzed files with anomalies and take action
@@ -76,7 +74,7 @@ const SplitFileAnalysis = () => {
               Upload File
             </Button>
             <Button size="lg" variant="outline" className="px-8 py-6 rounded-full text-lg" asChild>
-              <Link to="/">Go to Smart Recon</Link>
+              <Link to="/">Go to GL vs iHub Reconciliation</Link>
             </Button>
           </div>
 
@@ -88,14 +86,12 @@ const SplitFileAnalysis = () => {
         </div>
       </section>
       
-      {/* File Upload Section */}
       <section id="upload" className="py-20 px-4 bg-white dark:bg-gray-900">
         <div className="max-w-4xl mx-auto animate-fade-in-up">
           <SingleFileUpload onFileSplitComplete={handleFileSplitComplete} />
         </div>
       </section>
       
-      {/* Split Data Table Section */}
       <section id="split-data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
           {showTable ? (
@@ -103,34 +99,34 @@ const SplitFileAnalysis = () => {
               <Tabs defaultValue="file1" className="w-full">
                 <div className="flex justify-center mb-6">
                   <TabsList>
-                    <TabsTrigger value="file1" className="px-6">Anomaly Data</TabsTrigger>
-                    <TabsTrigger value="file2" className="px-6">Processed Data</TabsTrigger>
+                    <TabsTrigger value="file1" className="px-6">Catalyst Data</TabsTrigger>
+                    <TabsTrigger value="file2" className="px-6">Impact Data</TabsTrigger>
                   </TabsList>
                 </div>
                 
                 <TabsContent value="file1">
-                  <h2 className="text-2xl font-medium text-center mb-6">Anomaly Data</h2>
+                  <h2 className="text-2xl font-medium text-center mb-6">Catalyst Data</h2>
                   {file1Data.length > 0 ? (
                     <DynamicTable data={file1Data} headers={tableHeaders} />
                   ) : (
                     <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                      <h3 className="text-xl font-medium mb-2">No Anomaly Data Available</h3>
+                      <h3 className="text-xl font-medium mb-2">No Catalyst Data Available</h3>
                       <p className="text-muted-foreground max-w-xl mx-auto mb-4">
-                        The first split file does not contain any anomaly data.
+                        The first split file does not contain any Catalyst data.
                       </p>
                     </div>
                   )}
                 </TabsContent>
                 
                 <TabsContent value="file2">
-                  <h2 className="text-2xl font-medium text-center mb-6">Processed Data</h2>
+                  <h2 className="text-2xl font-medium text-center mb-6">Impact Data</h2>
                   {file2Data.length > 0 ? (
                     <DynamicTable data={file2Data} headers={tableHeaders} />
                   ) : (
                     <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-                      <h3 className="text-xl font-medium mb-2">No Processed Data Available</h3>
+                      <h3 className="text-xl font-medium mb-2">No Impact Data Available</h3>
                       <p className="text-muted-foreground max-w-xl mx-auto mb-4">
-                        The second split file does not contain any processed data.
+                        The second split file does not contain any Impact data.
                       </p>
                     </div>
                   )}
@@ -151,20 +147,16 @@ const SplitFileAnalysis = () => {
         </div>
       </section>
       
-      {/* Actions Section */}
-      {showTable && (
-        <section id="actions" className="py-20 px-4 bg-white dark:bg-gray-900">
-          <div className="max-w-4xl mx-auto animate-fade-in-up">
-            <h2 className="text-2xl font-medium text-center mb-8">Suggested Actions</h2>
-            <ActionsList actions={anomalyActions} onExecuteAction={(actionType) => {
-              toast.success(`Executing action: ${actionType}`);
-              // Here you would add the actual action execution logic
-            }} />
-          </div>
-        </section>
-      )}
+      <section id="actions" className="py-20 px-4 bg-white dark:bg-gray-900">
+        <div className="max-w-4xl mx-auto animate-fade-in-up">
+          <h2 className="text-2xl font-medium text-center mb-8">Suggested Actions</h2>
+          <ActionsList actions={anomalyActions} onExecuteAction={(actionType) => {
+            toast.success(`Executing action: ${actionType}`);
+            // Here you would add the actual action execution logic
+          }} />
+        </div>
+      </section>
       
-      {/* Footer */}
       <footer className="py-12 px-4 bg-gray-900 text-white">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
@@ -178,7 +170,8 @@ const SplitFileAnalysis = () => {
             </div>
             <div className="flex space-x-8">
               <Link to="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
-              <Link to="/split-file-analysis" className="text-gray-300 hover:text-white transition-colors">Split File Analysis</Link>
+              <Link to="/split-file-analysis" className="text-gray-300 hover:text-white transition-colors">Catalyst vs Impact</Link>
+              <Link to="/learn-more" className="text-gray-300 hover:text-white transition-colors">Learn More</Link>
             </div>
           </div>
           <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm">

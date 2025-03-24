@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { FileUp, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Progress } from '@/components/ui/progress';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { toast } from 'sonner';
-import { uploadFileToAPI } from '@/utils/apiUtils';
 import { API_BASE_URL } from '@/utils/apiUtils';
 import { parseCSV } from '@/lib/csv-parser';
 
@@ -60,46 +60,69 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
       const fileToastId = toast.loading(`Processing ${selectedFile.name}...`);
       
       try {
-        const endpoint = '/split-file';
-        await uploadFileToAPI(selectedFile, endpoint);
+        const formData = new FormData();
+        formData.append('file', selectedFile);
         
-        const response = await fetch(`${API_BASE_URL}/get-split-files`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          }
+        const response = await fetch(`${API_BASE_URL}/upload-reconciliation`, {
+          method: 'POST',
+          body: formData,
         });
         
         if (!response.ok) {
           throw new Error(`Server error: ${response.status}`);
         }
         
-        const result = await response.json();
+        const data = await response.json();
         
         let file1Data: DynamicColumnData[] = [];
         let file2Data: DynamicColumnData[] = [];
         let headers: string[] = [];
         let actions: any[] = [];
         
-        const text = await selectedFile.text();
-        const allData = parseCSV(text, selectedFile.name, 'anomaly');
-        
-        const splitIndex = Math.ceil(allData.length * 0.3);
-        file1Data = allData.slice(0, splitIndex).map(item => ({
-          ...item,
-          type: 'anomaly',
-          impact: Math.random() * 1000 * (Math.random() > 0.5 ? 1 : -1)
-        }));
-        
-        file2Data = allData.slice(splitIndex).map(item => ({
-          ...item,
-          type: 'processed'
-        }));
-        
-        if (allData.length > 0) {
-          headers = Object.keys(allData[0]);
+        // Use the API response data
+        if (data.catalyst_data && Array.isArray(data.catalyst_data)) {
+          file1Data = data.catalyst_data.map((item: any) => ({
+            ...item,
+            type: 'anomaly'
+          }));
+        } else {
+          // Fallback to CSV parsing if API doesn't return expected data
+          const text = await selectedFile.text();
+          const allData = parseCSV(text, selectedFile.name, 'anomaly');
+          
+          const splitIndex = Math.ceil(allData.length * 0.3);
+          file1Data = allData.slice(0, splitIndex).map(item => ({
+            ...item,
+            type: 'anomaly',
+            impact: Math.random() * 1000 * (Math.random() > 0.5 ? 1 : -1)
+          }));
         }
         
+        if (data.impact_data && Array.isArray(data.impact_data)) {
+          file2Data = data.impact_data.map((item: any) => ({
+            ...item,
+            type: 'processed'
+          }));
+        } else {
+          // Fallback to CSV parsing if API doesn't return expected data
+          const text = await selectedFile.text();
+          const allData = parseCSV(text, selectedFile.name, 'anomaly');
+          
+          const splitIndex = Math.ceil(allData.length * 0.3);
+          file2Data = allData.slice(splitIndex).map(item => ({
+            ...item,
+            type: 'processed'
+          }));
+        }
+        
+        // Extract headers from the data
+        if (file1Data.length > 0) {
+          headers = Object.keys(file1Data[0]);
+        } else if (file2Data.length > 0) {
+          headers = Object.keys(file2Data[0]);
+        }
+        
+        // Generate actions based on the anomaly data
         const actionTypes = [
           { keyword: 'duplicate', icon: 'FileText', type: 'duplicate-resolution' },
           { keyword: 'missing', icon: 'Search', type: 'missing-data-check' },
@@ -129,6 +152,7 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
         console.error('Error processing file:', error);
         toast.error(`Error processing file: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: fileToastId });
         
+        // Fallback to local processing
         const text = await selectedFile.text();
         const allData = parseCSV(text, selectedFile.name, 'anomaly');
         const splitIndex = Math.ceil(allData.length * 0.3);
@@ -169,7 +193,7 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
       <CardHeader>
         <CardTitle className="text-center">Upload Pre-Analyzed File</CardTitle>
         <CardDescription className="text-center">
-          Upload a single CSV file to be processed and split into anomaly and processed data
+          Upload a single CSV file to be processed and split into Catalyst and Impact data
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
