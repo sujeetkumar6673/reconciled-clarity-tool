@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -6,8 +5,15 @@ import { AlertCircle, CheckCircle2, Info, AlertTriangle, Ticket, WrenchIcon } fr
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '@/utils/apiUtils';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from '@/components/ui/pagination';
 
-// Update interface to match the API response structure
 interface RuleSuggestion {
   id?: number;
   TRADEID?: number;
@@ -30,8 +36,18 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
   isLoading 
 }) => {
   const [processingTrades, setProcessingTrades] = useState<Record<string, boolean>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
 
-  // Function to handle "Fix This" button click
+  const totalPages = Math.ceil(suggestions.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSuggestions = suggestions.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   const handleFixIssue = async (tradeId: number | undefined, matchStatus: string | undefined) => {
     if (!tradeId) {
       toast.error('No Trade ID provided');
@@ -42,7 +58,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
     setProcessingTrades(prev => ({ ...prev, [tradeKey]: true }));
     
     try {
-      // Call the API to fix the issue
       const response = await fetch(`${API_BASE_URL}/fix-issue?tradeId=${tradeId}&matchStatus=${matchStatus}`);
       
       if (!response.ok) {
@@ -54,7 +69,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
       console.error('Error fixing issue:', error);
       toast.error(`Failed to fix issue: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // For demo purposes, show success anyway
       setTimeout(() => {
         toast.success(`Fix initiated for Trade ID: ${tradeId} (DEMO)`);
       }, 1000);
@@ -63,7 +77,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
     }
   };
 
-  // Function to handle "Raise Ticket" button click
   const handleRaiseTicket = async (tradeId: number | undefined, matchStatus: string | undefined, rootCause: string | undefined) => {
     if (!tradeId) {
       toast.error('No Trade ID provided');
@@ -74,7 +87,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
     setProcessingTrades(prev => ({ ...prev, [tradeKey]: true }));
     
     try {
-      // Call the API to raise a ticket
       const response = await fetch(`${API_BASE_URL}/raise-ticket`, {
         method: 'POST',
         headers: {
@@ -96,7 +108,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
       console.error('Error raising ticket:', error);
       toast.error(`Failed to raise ticket: ${error instanceof Error ? error.message : 'Unknown error'}`);
       
-      // For demo purposes, show success anyway
       setTimeout(() => {
         toast.success(`Ticket #${Math.floor(Math.random() * 10000)} raised for Trade ID: ${tradeId}. Email notification sent. (DEMO)`);
       }, 1000);
@@ -143,7 +154,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
     );
   }
 
-  // Function to determine the priority based on MatchStatus
   const getPriorityFromMatchStatus = (matchStatus: string | undefined): 'high' | 'medium' | 'low' => {
     if (!matchStatus) return 'medium';
     
@@ -157,7 +167,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
     }
   };
 
-  // Function to determine the category based on MatchStatus
   const getCategoryFromMatchStatus = (matchStatus: string | undefined): string => {
     if (!matchStatus) return 'Unclassified';
     
@@ -176,7 +185,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
   };
 
   const getPriorityIcon = (suggestion: RuleSuggestion) => {
-    // Use existing priority if available, otherwise determine from MatchStatus
     const priority = suggestion.priority || getPriorityFromMatchStatus(suggestion.MatchStatus);
     
     switch(priority) {
@@ -191,6 +199,33 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
     }
   };
 
+  const renderPaginationLinks = () => {
+    const pages = [];
+    const maxPagesToShow = 3;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    
+    if (endPage === totalPages) {
+      startPage = Math.max(1, totalPages - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <PaginationItem key={i}>
+          <PaginationLink 
+            isActive={i === currentPage} 
+            onClick={() => handlePageChange(i)}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return pages;
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -198,7 +233,7 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col space-y-4">
-          {suggestions.map((suggestion, index) => (
+          {currentSuggestions.map((suggestion, index) => (
             <div key={suggestion.TRADEID || suggestion.id || index} className="p-4 border rounded-md bg-white dark:bg-gray-800 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5">
@@ -227,7 +262,6 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
                     )}
                   </div>
                   
-                  {/* Action Buttons */}
                   <div className="flex gap-2 mt-4">
                     <Button 
                       variant="default" 
@@ -255,6 +289,30 @@ const RuleSuggestionsPanel: React.FC<RuleSuggestionsPanelProps> = ({
             </div>
           ))}
         </div>
+        
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {renderPaginationLinks()}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
