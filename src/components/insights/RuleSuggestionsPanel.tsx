@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -13,6 +14,7 @@ import {
   PaginationNext,
   PaginationPrevious
 } from '@/components/ui/pagination';
+import EmailNotificationDialog from './EmailNotificationDialog';
 
 interface RuleSuggestion {
   id?: number;
@@ -39,6 +41,8 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
 }) => {
   const [processingTrades, setProcessingTrades] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<RuleSuggestion | null>(null);
   const itemsPerPage = 3;
 
   const totalPages = Math.ceil(suggestions.length / itemsPerPage);
@@ -134,6 +138,11 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
     } finally {
       setProcessingTrades(prev => ({ ...prev, [tradeKey]: false }));
     }
+  };
+
+  const handleOpenEmailDialog = (suggestion: RuleSuggestion) => {
+    setSelectedTrade(suggestion);
+    setEmailDialogOpen(true);
   };
 
   const handleRaiseTicket = async (tradeId: number | undefined, matchStatus: string | undefined, rootCause: string | undefined) => {
@@ -336,7 +345,7 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
                       variant="outline" 
                       size="sm" 
                       className="text-xs px-3 py-1 h-8"
-                      onClick={() => handleRaiseTicket(suggestion.TRADEID, suggestion.MatchStatus, suggestion.RootCause)}
+                      onClick={() => handleOpenEmailDialog(suggestion)}
                       disabled={processingTrades[`ticket-${suggestion.TRADEID}`]}
                     >
                       <Ticket className="h-3.5 w-3.5 mr-1" />
@@ -373,6 +382,18 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
           </div>
         )}
       </CardContent>
+
+      {/* Email notification dialog */}
+      {selectedTrade && (
+        <EmailNotificationDialog
+          open={emailDialogOpen}
+          onOpenChange={setEmailDialogOpen}
+          tradeId={selectedTrade.TRADEID}
+          matchStatus={selectedTrade.MatchStatus}
+          rootCause={selectedTrade.RootCause}
+          onSendSuccess={() => handleRaiseTicket(selectedTrade.TRADEID, selectedTrade.MatchStatus, selectedTrade.RootCause)}
+        />
+      )}
     </Card>
   );
 };
