@@ -304,9 +304,11 @@ const AnomalySection = () => {
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00'; 
   
-  // Always default to 0% if no anomalies are resolved
-  const resolutionRate = anomaliesData.length > 0 && resolvedCount > 0 
-    ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
+  // Always default to 0% if no anomalies are resolved or if there are no anomalies at all
+  const resolutionRate = anomaliesData.length > 0 
+    ? (resolvedCount > 0 
+        ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
+        : '0%')
     : '0%';
 
   // For debugging - log the data being passed to AnomalySummaryCards
@@ -330,9 +332,9 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Summary cards - always pass numbers, not undefined values */}
+        {/* Always pass actual values to summary cards, never undefined */}
         <AnomalySummaryCards 
-          totalAnomalies={totalAnomaliesCount || 0}
+          totalAnomalies={totalAnomaliesCount}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}

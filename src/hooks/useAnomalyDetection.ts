@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { AnomalyItem, UseAnomalyDetectionProps } from '@/types/anomaly';
@@ -51,7 +51,12 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
-  const detectAnomalies = async () => {
+  // Force a re-render when totalAnomaliesCount or totalImpactValue changes
+  useEffect(() => {
+    console.log("useAnomalyDetection - State updated:", { totalAnomaliesCount, totalImpactValue });
+  }, [totalAnomaliesCount, totalImpactValue]);
+
+  const detectAnomalies = useCallback(async () => {
     setIsDetecting(true);
     setProgress(5); // Start with 5% progress
     
@@ -110,6 +115,9 @@ export const useAnomalyDetection = ({
                   )
                 );
                 
+                // Set the anomaly count based on the filtered data
+                setTotalAnomaliesCount(filteredData.length);
+                
                 onAnomalyDataReceived(filteredData, headers);
               }
             }, 
@@ -157,6 +165,11 @@ export const useAnomalyDetection = ({
                     ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
                     : [];
                   
+                  // Set the anomaly count based on the JSON data if not already set
+                  if (totalAnomaliesCount === 0) {
+                    setTotalAnomaliesCount(jsonData.length);
+                  }
+                  
                   onAnomalyDataReceived(jsonData, headers);
                 }
                 
@@ -197,7 +210,7 @@ export const useAnomalyDetection = ({
     } finally {
       setIsDetecting(false);
     }
-  };
+  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, totalAnomaliesCount]);
 
   const downloadFile = () => {
     if (resultFile) {
