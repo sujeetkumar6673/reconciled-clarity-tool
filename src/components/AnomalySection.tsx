@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,12 +40,11 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
-  const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
+  const [renderKey, setRenderKey] = useState(0);
   
-  const { updateAnomalyStats, updateAnomalyData } = useAnomalyContext();
+  const { anomalyStats, anomalyData, updateAnomalyData, refreshStats } = useAnomalyContext();
   const processedExternalStats = useRef(false);
   
-  // Initialize with external stats only once
   useEffect(() => {
     if (externalAnomalyStats && 
         (externalAnomalyStats.count > 0 || externalAnomalyStats.impact !== 0) && 
@@ -56,6 +54,17 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
       processedExternalStats.current = true;
     }
   }, [externalAnomalyStats, updateAnomalyStats]);
+  
+  useEffect(() => {
+    console.log('AnomalySection - Context data updated:', {
+      anomalyDataLength: anomalyData.length,
+      totalAnomalies: anomalyStats.totalAnomalies
+    });
+    
+    if (anomalyData.length > 0 || anomalyStats.totalAnomalies > 0) {
+      setRenderKey(prev => prev + 1);
+    }
+  }, [anomalyData, anomalyStats]);
 
   const handleAnomalyDataReceived = useCallback((data: DynamicColumnData[], headers: string[]) => {
     console.log('Anomaly data received with length:', data.length);
@@ -90,15 +99,13 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
       };
     });
     
-    setDisplayData(transformedData);
     updateAnomalyData(transformedData);
+    setRenderKey(prev => prev + 1);
   }, [updateAnomalyData]);
 
-  // Use a ref to prevent redundant callbacks
   const prevStatsRef = useRef({ count: 0, impact: 0 });
   
   const handleStatsChange = useCallback((count: number, impact: number) => {
-    // Skip update if values haven't changed
     if (prevStatsRef.current.count === count && prevStatsRef.current.impact === impact) {
       return;
     }
@@ -106,8 +113,8 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
     console.log('AnomalySection - Stats changed:', { count, impact });
     updateAnomalyStats(count, impact);
     
-    // Update ref with new values
     prevStatsRef.current = { count, impact };
+    setRenderKey(prev => prev + 1);
   }, [updateAnomalyStats]);
 
   const { detectAnomalies, isDetecting } = useAnomalyDetection({
@@ -115,7 +122,7 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
     onAnomalyStatsChange: handleStatsChange
   });
 
-  const anomaliesData = displayData.length > 0 ? displayData : [];
+  const anomaliesData = anomalyData.length > 0 ? anomalyData : [];
 
   const uniqueBuckets = Array.from(
     new Set(anomaliesData.map(a => a.bucket?.split(':')[0]).filter(Boolean))
@@ -170,6 +177,13 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
     }
   };
 
+  const handleRefresh = () => {
+    console.log('AnomalySection - Manual refresh requested');
+    refreshStats();
+    setRenderKey(prev => prev + 1);
+    toast.info('Refreshing anomaly data...');
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       <div className="mb-8">
@@ -177,15 +191,21 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
         <p className="text-muted-foreground text-center max-w-2xl mx-auto">
           Identify and resolve reconciliation anomalies and discrepancies with AI-powered insights
         </p>
+        <div className="flex justify-center mt-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="flex items-center gap-1">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh Data
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <AnomalySummaryCards />
+        <AnomalySummaryCards key={`summary-cards-${renderKey}`} />
 
-        <AnomalyTrendChart chartData={mockChartData} />
+        <AnomalyTrendChart key={`trend-chart-${renderKey}`} chartData={mockChartData} />
 
         <div className="lg:col-span-2 animate-fade-in animate-delay-200">
-          <Card className="glass-card h-full">
+          <Card className="glass-card h-full" key={`anomaly-insights-${renderKey}`}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Anomaly Insights</CardTitle>

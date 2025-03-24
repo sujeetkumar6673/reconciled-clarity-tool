@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
   AreaChart,
@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import { useAnomalyContext } from '@/context/AnomalyContext';
 
 interface ChartDataPoint {
   date: string;
@@ -18,13 +19,94 @@ interface ChartDataPoint {
 }
 
 interface AnomalyTrendChartProps {
-  chartData: ChartDataPoint[];
+  chartData?: ChartDataPoint[];
 }
 
-const AnomalyTrendChart: React.FC<AnomalyTrendChartProps> = ({ chartData }) => {
+const AnomalyTrendChart: React.FC<AnomalyTrendChartProps> = ({ chartData: externalChartData }) => {
+  const [localChartData, setLocalChartData] = useState<ChartDataPoint[]>(externalChartData || []);
+  const [renderKey, setRenderKey] = useState(0);
+  
+  // Get anomaly data from context
+  const { anomalyStats, anomalyData } = useAnomalyContext();
+  
+  // Generate chart data from anomaly data when either context data or props change
+  useEffect(() => {
+    console.log('AnomalyTrendChart - Context update:', { 
+      anomaliesCount: anomalyData.length,
+      totalAnomalies: anomalyStats.totalAnomalies,
+      totalImpact: anomalyStats.totalImpact,
+      externalDataLength: externalChartData?.length || 0
+    });
+    
+    // If we have anomaly data from context, generate chart data
+    if (anomalyData.length > 0) {
+      // Group anomalies by date
+      const anomaliesByDate = anomalyData.reduce<Record<string, { count: number, impact: number }>>(
+        (acc, anomaly) => {
+          const date = anomaly.date?.substring(5) || 'unknown'; // Get MM/DD format
+          const impact = parseFloat(anomaly.impact?.replace(/[^0-9.-]+/g, '') || '0');
+          
+          if (!acc[date]) {
+            acc[date] = { count: 0, impact: 0 };
+          }
+          
+          acc[date].count += anomaly.anomalyCount || 1;
+          acc[date].impact += isNaN(impact) ? 0 : impact;
+          
+          return acc;
+        }, {}
+      );
+      
+      // Convert to chart data format
+      const newChartData: ChartDataPoint[] = Object.entries(anomaliesByDate).map(
+        ([date, { count, impact }]) => ({
+          date,
+          anomalies: count,
+          amount: Math.round(impact)
+        })
+      );
+      
+      // Add any missing days to ensure at least 7 data points
+      if (newChartData.length < 7) {
+        const today = new Date();
+        for (let i = 0; i < 7 - newChartData.length; i++) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - (i + 1));
+          const dateStr = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+          
+          // Only add if not already in chart data
+          if (!newChartData.some(item => item.date === dateStr)) {
+            newChartData.push({
+              date: dateStr,
+              anomalies: 0,
+              amount: 0
+            });
+          }
+        }
+      }
+      
+      // Sort by date
+      newChartData.sort((a, b) => {
+        const [aMonth, aDay] = a.date.split('/').map(Number);
+        const [bMonth, bDay] = b.date.split('/').map(Number);
+        return aMonth === bMonth ? aDay - bDay : aMonth - bMonth;
+      });
+      
+      console.log('Generated new chart data:', newChartData);
+      setLocalChartData(newChartData);
+      setRenderKey(prev => prev + 1);
+    } 
+    // Fall back to external chart data if available and no context data
+    else if (externalChartData && externalChartData.length > 0 && localChartData.length === 0) {
+      console.log('Using external chart data:', externalChartData);
+      setLocalChartData(externalChartData);
+      setRenderKey(prev => prev + 1);
+    }
+  }, [anomalyData, anomalyStats, externalChartData, localChartData.length]);
+
   return (
     <div className="lg:col-span-1 animate-fade-in animate-delay-100">
-      <Card className="glass-card h-full">
+      <Card className="glass-card h-full" key={`anomaly-trend-chart-${renderKey}`}>
         <CardHeader>
           <CardTitle>Anomaly Trend</CardTitle>
           <CardDescription>
@@ -35,7 +117,7 @@ const AnomalyTrendChart: React.FC<AnomalyTrendChartProps> = ({ chartData }) => {
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={chartData}
+                data={localChartData}
                 margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
               >
                 <defs>
@@ -52,7 +134,13 @@ const AnomalyTrendChart: React.FC<AnomalyTrendChartProps> = ({ chartData }) => {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis yAxisId="left" orientation="left" tick={{ fontSize: 12 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip 
+                  formatter={(value, name) => [
+                    value, 
+                    name === 'anomalies' ? 'Anomalies' : 'Amount ($)'
+                  ]}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
                 <Area
                   yAxisId="left"
                   type="monotone"
