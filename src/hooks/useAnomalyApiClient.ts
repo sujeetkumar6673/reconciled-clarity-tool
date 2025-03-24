@@ -30,19 +30,22 @@ export const useAnomalyApiClient = ({
       const timeoutId = setTimeout(() => controller.abort(), 300000);
       
       try {
-        // Prepare headers with API key if provided
+        // Build the URL with API key as a query parameter if provided
+        let apiUrl = `${API_BASE_URL}/test`;
+        
+        // Add API key to URL if provided
+        if (apiKey) {
+          apiUrl += `?openai_key=${encodeURIComponent(apiKey)}`;
+          console.log('Using provided API key for API call via URL parameter');
+        }
+        
+        // Prepare headers - no API key in headers now
         const headers: HeadersInit = {
           'Accept': 'application/json, text/csv, */*',
           'Cache-Control': 'no-cache'
         };
         
-        // Add API key to headers if provided
-        if (apiKey) {
-          headers['X-OpenAI-API-Key'] = apiKey;
-          console.log('Using provided API key for API call');
-        }
-        
-        const response = await fetch(`${API_BASE_URL}/test`, {
+        const response = await fetch(apiUrl, {
           method: 'GET',
           signal: controller.signal,
           headers

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { AnomalyItem, InsightResponse, UseAnomalyInsightsProps } from '@/types/anomaly';
@@ -45,22 +44,25 @@ export const useAnomalyInsights = ({
       
       try {
         // Call the real API endpoint with error handling
-        console.log('Fetching insights from API:', `${API_BASE_URL}/insights`);
+        // Build the URL with the API key as a query parameter if provided
+        let apiUrl = `${API_BASE_URL}/insights?req=${requestId}`;
         
-        // Prepare headers with API key if provided
+        // Add API key to URL if provided
+        if (keyToUse) {
+          apiUrl += `&openai_key=${encodeURIComponent(keyToUse)}`;
+          console.log('Using provided API key for insights generation via URL parameter');
+        }
+        
+        console.log('Fetching insights from API:', apiUrl);
+        
+        // Prepare headers - no API key in headers now
         const headers: HeadersInit = {
           'Accept': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate'
         };
         
-        // Add API key to headers if provided
-        if (keyToUse) {
-          headers['X-OpenAI-API-Key'] = keyToUse;
-          console.log('Using provided API key for insights generation');
-        }
-        
         // Using fetch with timeout and request ID to ensure fresh data
-        const response = await fetch(`${API_BASE_URL}/insights?req=${requestId}`, {
+        const response = await fetch(apiUrl, {
           method: 'GET',
           signal: controller.signal,
           headers
