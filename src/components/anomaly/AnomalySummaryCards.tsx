@@ -19,7 +19,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
   totalCount
 }) => {
   // Debug log to see what values are being passed to the component
-  console.log('AnomalySummaryCards props:', { totalAnomalies, totalImpact, resolutionRate });
+  console.log('AnomalySummaryCards props:', { totalAnomalies, totalImpact, resolutionRate, resolvedCount, totalCount });
 
   return (
     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 animate-fade-in">
@@ -31,7 +31,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{totalAnomalies}</div>
+          <div className="text-3xl font-bold">{totalAnomalies || 0}</div>
           <p className="text-sm text-muted-foreground">Across all accounts</p>
         </CardContent>
       </Card>
@@ -45,7 +45,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold">
-            {totalImpact}
+            {totalImpact || '$0.00'}
           </div>
           <p className="text-sm text-muted-foreground">Combined financial impact</p>
         </CardContent>
@@ -59,7 +59,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{resolutionRate}</div>
+          <div className="text-3xl font-bold">{resolutionRate || '0%'}</div>
           <p className="text-sm text-muted-foreground">{resolvedCount} of {totalCount} anomalies resolved</p>
         </CardContent>
       </Card>

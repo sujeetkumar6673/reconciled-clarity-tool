@@ -203,7 +203,7 @@ const AnomalySection = () => {
       const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
         // Create a properly typed AnomalyItem from the DynamicColumnData
         return {
-          id: Number(item.id.replace('anomaly-', '')) || index,
+          id: Number(item.id?.replace('anomaly-', '')) || index,
           title: item.title as string || `Anomaly ${index + 1}`,
           description: item.description as string || 'No description available',
           severity: item.severity as string || 'medium',
@@ -302,11 +302,23 @@ const AnomalySection = () => {
   // Format total impact for display - use the actual totalImpactValue from the API if available
   const formattedTotalImpact = totalImpactValue 
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
-    : '$0.00'; // Better default value
+    : '$0.00'; 
   
-  const resolutionRate = resolvedCount > 0 
+  // Always default to 0% if no anomalies are resolved
+  const resolutionRate = anomaliesData.length > 0 && resolvedCount > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
+
+  // For debugging - log the data being passed to AnomalySummaryCards
+  useEffect(() => {
+    console.log('Values for AnomalySummaryCards:', {
+      totalAnomaliesCount,
+      formattedTotalImpact,
+      resolutionRate,
+      resolvedCount,
+      totalCount: anomaliesData.length
+    });
+  }, [totalAnomaliesCount, formattedTotalImpact, resolutionRate, resolvedCount, anomaliesData.length]);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
@@ -318,7 +330,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Summary cards */}
+        {/* Summary cards - always pass numbers, not undefined values */}
         <AnomalySummaryCards 
           totalAnomalies={totalAnomaliesCount || 0}
           totalImpact={formattedTotalImpact}
