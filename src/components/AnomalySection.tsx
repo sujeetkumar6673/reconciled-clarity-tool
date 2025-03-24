@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,24 @@ import { AnomalyItem } from './anomaly/AnomalyCard';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { toast } from 'sonner';
+
+// Define the chart data structure
+interface ChartDataPoint {
+  date: string;
+  anomalies: number;
+  amount: number;
+}
+
+// Mock chart data
+const mockChartData: ChartDataPoint[] = [
+  { date: '01/01', anomalies: 5, amount: 2400 },
+  { date: '01/02', anomalies: 7, amount: 1400 },
+  { date: '01/03', anomalies: 3, amount: 4500 },
+  { date: '01/04', anomalies: 8, amount: 3200 },
+  { date: '01/05', anomalies: 12, amount: 6200 },
+  { date: '01/06', anomalies: 6, amount: 2900 },
+  { date: '01/07', anomalies: 4, amount: 1800 }
+];
 
 interface AnomalySectionProps {
   externalAnomalyStats?: {
@@ -160,7 +179,8 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
     };
   }, []);
 
-  const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
+  // Use displayData as the source of truth, not the undefined anomalyData
+  const anomaliesData = displayData.length > 0 ? displayData : [];
 
   const uniqueBuckets = Array.from(
     new Set(anomaliesData.map(a => a.bucket?.split(':')[0]).filter(Boolean))
@@ -238,7 +258,7 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
           totalCount={localAnomaly.totalCount}
         />
 
-        <AnomalyTrendChart chartData={chartData} />
+        <AnomalyTrendChart chartData={mockChartData} />
 
         <div className="lg:col-span-2 animate-fade-in animate-delay-200">
           <Card className="glass-card h-full">
@@ -283,13 +303,13 @@ const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
                 
                 <div className="flex flex-wrap gap-2 mt-2">
                   <div className="text-xs font-medium text-muted-foreground mr-1 mt-1">AI Buckets:</div>
-                  {uniqueBuckets.map(bucket => (
+                  {uniqueBuckets.map((bucket) => (
                     <Badge
-                      key={bucket}
+                      key={bucket as React.Key}
                       variant={selectedBucket === bucket ? 'default' : 'outline'}
                       className="cursor-pointer"
                       onClick={() => 
-                        setSelectedBucket(selectedBucket === bucket ? null : bucket)
+                        setSelectedBucket(selectedBucket === bucket ? null : bucket as string)
                       }
                     >
                       {getBucketIcon(bucket as string)}
