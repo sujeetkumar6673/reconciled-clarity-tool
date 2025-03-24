@@ -317,7 +317,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Pass the values directly to ensure they're always current */}
+        {/* Pass the state values directly from hook to component */}
         <AnomalySummaryCards 
           totalAnomalies={totalAnomaliesCount}
           totalImpact={formattedTotalImpact}
