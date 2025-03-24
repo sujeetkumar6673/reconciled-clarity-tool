@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -188,12 +189,16 @@ const AnomalySection = () => {
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
 
+  // Get data from the useAnomalyDetection hook
   const { 
     totalAnomaliesCount, 
     totalImpactValue,
-    detectAnomalies
+    detectAnomalies,
+    isDetecting
   } = useAnomalyDetection({
     onAnomalyDataReceived: (data, headers) => {
+      console.log('onAnomalyDataReceived called with data length:', data.length);
+      
       const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
         return {
           id: Number(item.id?.replace('anomaly-', '')) || index,
@@ -226,6 +231,7 @@ const AnomalySection = () => {
     }
   });
 
+  // Use real data if available, otherwise fall back to mock data
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
   const uniqueBuckets = Array.from(
@@ -243,19 +249,22 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  const formattedTotalImpact = typeof totalImpactValue === 'number' 
+  // Format the total impact value for display, ensuring we handle the value properly
+  const formattedTotalImpact = totalImpactValue !== 0 && totalImpactValue !== null
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00';
   
+  // Calculate resolution rate
   const resolutionRate = anomaliesData.length > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
 
+  // Debug logging to track the values being passed to AnomalySummaryCards
   useEffect(() => {
-    console.log('AnomalySection - totalAnomaliesCount:', totalAnomaliesCount);
-    console.log('AnomalySection - totalImpactValue:', totalImpactValue);
-    console.log('Values for AnomalySummaryCards:', {
-      totalAnomalies: totalAnomaliesCount,
+    console.log('AnomalySection debug - totalAnomaliesCount:', totalAnomaliesCount);
+    console.log('AnomalySection debug - totalImpactValue:', totalImpactValue);
+    console.log('AnomalySection debug - Formatted values for cards:', {
+      totalAnomalies: totalAnomaliesCount || 0,
       formattedTotalImpact,
       resolutionRate,
       resolvedCount,
@@ -313,6 +322,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Explicitly pass the values to AnomalySummaryCards, ensuring they're properly formatted */}
         <AnomalySummaryCards 
           totalAnomalies={totalAnomaliesCount || 0}
           totalImpact={formattedTotalImpact}

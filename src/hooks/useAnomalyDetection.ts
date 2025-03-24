@@ -51,7 +51,7 @@ export const useAnomalyDetection = ({
     };
   }, [isDetecting, progress]);
 
-  // Debugging useEffect to track state changes
+  // Debug logging for state changes
   useEffect(() => {
     console.log("useAnomalyDetection - State updated:", { totalAnomaliesCount, totalImpactValue });
   }, [totalAnomaliesCount, totalImpactValue]);
@@ -117,8 +117,8 @@ export const useAnomalyDetection = ({
                 
                 // Set the anomaly count based on the filtered data
                 const anomaliesCount = filteredData.length;
-                setTotalAnomaliesCount(anomaliesCount);
                 console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
+                setTotalAnomaliesCount(anomaliesCount);
                 
                 onAnomalyDataReceived(filteredData, headers);
               }
@@ -141,11 +141,13 @@ export const useAnomalyDetection = ({
               // CRITICAL FIX: Update state with values from the API immediately
               if (typeof result.anomaly_count === 'number') {
                 console.log(`Received anomaly_count: ${result.anomaly_count}`);
+                // Explicitly update state with the correct value
                 setTotalAnomaliesCount(result.anomaly_count);
               }
               
               if (typeof result.total_impact === 'number') {
                 console.log(`Received total_impact: ${result.total_impact}`);
+                // Explicitly update state with the correct value
                 setTotalImpactValue(result.total_impact);
               }
               
