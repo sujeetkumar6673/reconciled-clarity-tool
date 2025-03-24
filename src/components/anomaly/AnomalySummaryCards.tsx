@@ -39,7 +39,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{totalAnomalies}</div>
+          <div className="text-3xl font-bold" data-testid="anomaly-count">{totalAnomalies}</div>
           <p className="text-sm text-muted-foreground">Across all accounts</p>
         </CardContent>
       </Card>
@@ -52,7 +52,7 @@ const AnomalySummaryCards: React.FC<AnomalySummaryCardsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold">{totalImpact}</div>
+          <div className="text-3xl font-bold" data-testid="impact-value">{totalImpact}</div>
           <p className="text-sm text-muted-foreground">Combined financial impact</p>
         </CardContent>
       </Card>

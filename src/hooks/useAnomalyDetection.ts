@@ -58,6 +58,20 @@ export const useAnomalyDetection = ({
     console.log("useAnomalyDetection - State updated:", { totalAnomaliesCount, totalImpactValue });
   }, [totalAnomaliesCount, totalImpactValue]);
 
+  const setAnomalyStats = useCallback((count: number, impact: number) => {
+    console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
+    setTotalAnomaliesCount(count);
+    setTotalImpactValue(impact);
+    
+    // Force a small delay to ensure state updates are processed
+    setTimeout(() => {
+      console.log("Delayed state check:", { 
+        totalAnomaliesCount: count, 
+        totalImpactValue: impact 
+      });
+    }, 50);
+  }, []);
+
   const detectAnomalies = useCallback(async () => {
     setIsDetecting(true);
     setProgress(5); // Start with 5% progress
@@ -117,13 +131,19 @@ export const useAnomalyDetection = ({
                   )
                 );
                 
-                // CRITICAL FIX: First update the state
+                // Set the anomaly count based on the filtered data
                 const anomaliesCount = filteredData.length;
                 console.log(`Setting totalAnomaliesCount to ${anomaliesCount}`);
-                setTotalAnomaliesCount(anomaliesCount);
                 
-                // Then call the callback
-                onAnomalyDataReceived(filteredData, headers);
+                // Update anomaly stats first, then call the callback
+                setAnomalyStats(anomaliesCount, 0);
+                
+                // Small delay before calling callback to ensure state is updated
+                setTimeout(() => {
+                  if (onAnomalyDataReceived) {
+                    onAnomalyDataReceived(filteredData, headers);
+                  }
+                }, 50);
               }
             }, 
             onAnomalyInsightsReceived
@@ -141,46 +161,42 @@ export const useAnomalyDetection = ({
             
             // Extract data from the API response
             if (result) {
-              // CRITICAL FIX: First update state with values from the API immediately
-              if (typeof result.anomaly_count === 'number') {
-                console.log(`Received anomaly_count: ${result.anomaly_count}`);
-                // Explicitly update state with the correct value
-                setTotalAnomaliesCount(result.anomaly_count);
-              }
+              // Get the anomaly count and impact values
+              const count = typeof result.anomaly_count === 'number' ? result.anomaly_count : 0;
+              const impact = typeof result.total_impact === 'number' ? result.total_impact : 0;
               
-              if (typeof result.total_impact === 'number') {
-                console.log(`Received total_impact: ${result.total_impact}`);
-                // Explicitly update state with the correct value
-                setTotalImpactValue(result.total_impact);
-              }
+              console.log(`Received anomaly_count: ${count}`);
+              console.log(`Received total_impact: ${impact}`);
+              
+              // Update state IMMEDIATELY with the values from the API
+              setAnomalyStats(count, impact);
               
               if (result.data && Array.isArray(result.data)) {
-                // Process JSON data directly
-                if (onAnomalyDataReceived) {
-                  // Transform the data to match the expected format
-                  const jsonData = result.data.map((item: any, index: number) => ({
-                    id: `anomaly-${index}`,
-                    source: 'Anomaly Detection',
-                    status: 'Unmatched',
-                    dataType: 'anomaly',
-                    ...item
-                  }));
-                  
-                  // Extract headers from the first item if available
-                  const headers = result.data.length > 0 
-                    ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
-                    : [];
-                  
-                  // CRITICAL FIX: Call the callback after updating state
-                  onAnomalyDataReceived(jsonData, headers);
-                }
+                // Process JSON data directly with a delay to ensure state is updated first
+                setTimeout(() => {
+                  if (onAnomalyDataReceived) {
+                    // Transform the data to match the expected format
+                    const jsonData = result.data.map((item: any, index: number) => ({
+                      id: `anomaly-${index}`,
+                      source: 'Anomaly Detection',
+                      status: 'Unmatched',
+                      dataType: 'anomaly',
+                      ...item
+                    }));
+                    
+                    // Extract headers from the first item if available
+                    const headers = result.data.length > 0 
+                      ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
+                      : [];
+                    
+                    onAnomalyDataReceived(jsonData, headers);
+                  }
+                }, 100); // Delay to ensure state updates first
                 
                 setHasAnomalies(result.data.length > 0);
                 
                 // Use either the anomaly_count from the response or the length of the data array
-                const anomalyCount = typeof result.anomaly_count === 'number' 
-                  ? result.anomaly_count 
-                  : result.data.length;
+                const anomalyCount = count || result.data.length;
                 
                 toast.success(`Anomaly detection completed! Found ${anomalyCount} anomalies.`);
               } else {
@@ -212,7 +228,7 @@ export const useAnomalyDetection = ({
     } finally {
       setIsDetecting(false);
     }
-  }, [onAnomalyDataReceived, onAnomalyInsightsReceived]);
+  }, [onAnomalyDataReceived, onAnomalyInsightsReceived, setAnomalyStats]);
 
   const downloadFile = () => {
     if (resultFile) {
