@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Download, Sparkles, Brain, RefreshCw } from 'lucide-react';
@@ -81,41 +82,31 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <Button
-        onClick={detectAnomalies}
-        disabled={isDetecting}
-        size="lg"
-        className="bg-amber-600 hover:bg-amber-700"
-      >
-        {isDetecting ? (
-          <>
-            <LoadingSpinner />
-            Detecting Anomalies...
-          </>
-        ) : (
-          <>
-            <AlertTriangle className="mr-2 h-5 w-5" />
-            Detect Anomalies
-          </>
-        )}
-      </Button>
-      
-      {hasAnomalies && !isDetecting && (
+      {/* Main button row with Detect Anomalies and Generate Insights side by side */}
+      <div className="flex flex-wrap items-center gap-4 justify-center">
         <Button
-          onClick={handleUpdateStats}
-          size="sm"
-          variant="outline"
-          className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
+          onClick={detectAnomalies}
+          disabled={isDetecting}
+          size="lg"
+          className="bg-amber-600 hover:bg-amber-700"
         >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh Statistics
+          {isDetecting ? (
+            <>
+              <LoadingSpinner />
+              Detecting Anomalies...
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              Detect Anomalies
+            </>
+          )}
         </Button>
-      )}
-      
-      {hasAnomalies && !isDetecting && (
+        
+        {/* Always show the Generate Insights button, but disable it if no anomalies or if detecting */}
         <Button
           onClick={handleGenerateInsights}
-          disabled={isGeneratingInsights}
+          disabled={isGeneratingInsights || !hasAnomalies || isDetecting}
           size="lg"
           variant="outline"
           className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-950 dark:hover:text-blue-300"
@@ -131,6 +122,18 @@ const AnomalyDetectionButton: React.FC<AnomalyDetectionButtonProps> = ({
               Generate AI Insights
             </>
           )}
+        </Button>
+      </div>
+      
+      {hasAnomalies && !isDetecting && (
+        <Button
+          onClick={handleUpdateStats}
+          size="sm"
+          variant="outline"
+          className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Statistics
         </Button>
       )}
       
