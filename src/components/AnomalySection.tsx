@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -188,6 +189,8 @@ const AnomalySection = () => {
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [localTotalAnomalies, setLocalTotalAnomalies] = useState(0);
+  const [localTotalImpact, setLocalTotalImpact] = useState(0);
   
   const handleAnomalyDataReceived = useCallback((data: DynamicColumnData[], headers: string[]) => {
     console.log('Anomaly data received with length:', data.length);
@@ -226,6 +229,7 @@ const AnomalySection = () => {
     setRefreshKey(prev => prev + 1);
   }, []);
 
+  // Use destructuring to get values from the hook
   const { 
     totalAnomaliesCount, 
     totalImpactValue,
@@ -235,8 +239,13 @@ const AnomalySection = () => {
     onAnomalyDataReceived: handleAnomalyDataReceived
   });
 
+  // Add effect to update local state when hook values change
   useEffect(() => {
     console.log('AnomalySection - Hook values updated:', { totalAnomaliesCount, totalImpactValue });
+    setLocalTotalAnomalies(totalAnomaliesCount);
+    setLocalTotalImpact(totalImpactValue);
+    // Force refresh when values change
+    setRefreshKey(prev => prev + 1);
   }, [totalAnomaliesCount, totalImpactValue]);
 
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
@@ -256,8 +265,9 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  const formattedTotalImpact = totalImpactValue !== 0
-    ? `$${Math.abs(totalImpactValue).toLocaleString()}`
+  // Format impact using local state
+  const formattedTotalImpact = localTotalImpact !== 0
+    ? `$${Math.abs(localTotalImpact).toLocaleString()}`
     : '$0.00';
   
   const resolutionRate = anomaliesData.length > 0 
@@ -315,8 +325,8 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
-          key={`summary-cards-${refreshKey}-${totalAnomaliesCount}`}
-          totalAnomalies={totalAnomaliesCount}
+          key={`summary-cards-${refreshKey}`}
+          totalAnomalies={localTotalAnomalies}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}
@@ -426,7 +436,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
-        <p>Debug: Anomaly Count: {totalAnomaliesCount}, Impact: {totalImpactValue}, Render Key: {refreshKey}</p>
+        <p>Debug: Anomaly Count: {localTotalAnomalies}, Impact: {localTotalImpact}, Render Key: {refreshKey}</p>
       </div>
     </div>
   );

@@ -9,12 +9,28 @@ export const useAnomalyDetection = ({
   onAnomalyDataReceived, 
   onAnomalyInsightsReceived 
 }: UseAnomalyDetectionProps = {}) => {
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [resultFile, setResultFile] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
-  const [hasAnomalies, setHasAnomalies] = useState(false);
-  const [totalAnomaliesCount, setTotalAnomaliesCount] = useState(0);
-  const [totalImpactValue, setTotalImpactValue] = useState(0);
+  // Use atomic state to avoid partial updates
+  const [state, setState] = useState({
+    isDetecting: false,
+    resultFile: null as string | null,
+    progress: 0,
+    hasAnomalies: false,
+    totalAnomaliesCount: 0,
+    totalImpactValue: 0
+  });
+  
+  // Create individual getters for cleaner code
+  const isDetecting = state.isDetecting;
+  const resultFile = state.resultFile;
+  const progress = state.progress;
+  const hasAnomalies = state.hasAnomalies;
+  const totalAnomaliesCount = state.totalAnomaliesCount;
+  const totalImpactValue = state.totalImpactValue;
+  
+  // Log state updates for debugging
+  useEffect(() => {
+    console.log('useAnomalyDetection - State updated:', { totalAnomaliesCount, totalImpactValue });
+  }, [totalAnomaliesCount, totalImpactValue]);
   
   const { 
     isGeneratingInsights, 
@@ -27,7 +43,7 @@ export const useAnomalyDetection = ({
   // Reset progress when detection starts/stops
   useEffect(() => {
     if (!isDetecting) {
-      setProgress(0);
+      setState(prev => ({ ...prev, progress: 0 }));
     }
   }, [isDetecting]);
   
@@ -37,10 +53,13 @@ export const useAnomalyDetection = ({
     
     if (isDetecting && progress < 95) {
       interval = window.setInterval(() => {
-        setProgress(prevProgress => {
+        setState(prev => {
           // Gradually slow down progress as it gets closer to 95%
-          const increment = Math.max(1, Math.floor((95 - prevProgress) / 10));
-          return Math.min(95, prevProgress + increment);
+          const increment = Math.max(1, Math.floor((95 - prev.progress) / 10));
+          return {
+            ...prev,
+            progress: Math.min(95, prev.progress + increment)
+          };
         });
       }, 500);
     }
@@ -56,19 +75,22 @@ export const useAnomalyDetection = ({
   const updateAnomalyStats = useCallback((count: number, impact: number) => {
     console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
     
-    // Update state directly
-    setTotalAnomaliesCount(count);
-    setTotalImpactValue(impact);
+    // Atomic state update
+    setState(prev => ({
+      ...prev,
+      totalAnomaliesCount: count,
+      totalImpactValue: impact
+    }));
     
-    // Log state update
+    // Log state update with a delay to see if it took effect
     setTimeout(() => {
       console.log("Delayed state check:", { totalAnomaliesCount: count, totalImpactValue: impact });
     }, 500);
   }, []);
 
   const detectAnomalies = useCallback(async () => {
-    setIsDetecting(true);
-    setProgress(5); // Start with 5% progress
+    setState(prev => ({ ...prev, isDetecting: true }));
+    setState(prev => ({ ...prev, progress: 5 })); // Start with 5% progress
     
     try {
       toast.info('Starting anomaly detection process with AI insights...');
@@ -90,7 +112,7 @@ export const useAnomalyDetection = ({
         clearTimeout(timeoutId);
         
         // Set to 100% when we get the response
-        setProgress(100);
+        setState(prev => ({ ...prev, progress: 100 }));
         
         // Handle non-200 responses properly
         if (!response.ok) {
@@ -110,7 +132,7 @@ export const useAnomalyDetection = ({
           // Create blob and download link
           const blob = new Blob([csvData], { type: 'text/csv' });
           const url = window.URL.createObjectURL(blob);
-          setResultFile(url);
+          setState(prev => ({ ...prev, resultFile: url }));
           
           // Parse CSV data for the UI table
           const hasData = parseCsvForTable(csvData, 
@@ -143,7 +165,7 @@ export const useAnomalyDetection = ({
             onAnomalyInsightsReceived
           );
           
-          setHasAnomalies(hasData);
+          setState(prev => ({ ...prev, hasAnomalies: hasData }));
           
           toast.success('Anomaly detection completed with AI insights! CSV file is ready for download.');
         } else {
@@ -187,7 +209,7 @@ export const useAnomalyDetection = ({
                   }
                 }, 300);
                 
-                setHasAnomalies(result.data.length > 0);
+                setState(prev => ({ ...prev, hasAnomalies: result.data.length > 0 }));
                 
                 toast.success(`Anomaly detection completed! Found ${count} anomalies.`);
               } else {
@@ -215,9 +237,9 @@ export const useAnomalyDetection = ({
       }
       
       // No mock data fallback - just show error
-      setHasAnomalies(false);
+      setState(prev => ({ ...prev, hasAnomalies: false }));
     } finally {
-      setIsDetecting(false);
+      setState(prev => ({ ...prev, isDetecting: false }));
     }
   }, [onAnomalyDataReceived, onAnomalyInsightsReceived, updateAnomalyStats]);
 
