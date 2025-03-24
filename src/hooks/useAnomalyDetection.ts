@@ -21,7 +21,9 @@ export const useAnomalyDetection = ({
     isGeneratingInsights, 
     generateInsights, 
     insightsData 
-  } = useAnomalyInsights({ onAnomalyInsightsReceived });
+  } = useAnomalyInsights({ 
+    onAnomalyInsightsReceived,
+  });
 
   // Reset progress when detection starts/stops
   useEffect(() => {

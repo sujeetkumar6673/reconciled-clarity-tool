@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -189,7 +188,6 @@ const AnomalySection = () => {
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [displayData, setDisplayData] = useState<AnomalyItem[]>([]);
 
-  // Get data from the useAnomalyDetection hook
   const { 
     totalAnomaliesCount, 
     totalImpactValue,
@@ -231,7 +229,6 @@ const AnomalySection = () => {
     }
   });
 
-  // Use real data if available, otherwise fall back to mock data
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
   const uniqueBuckets = Array.from(
@@ -249,17 +246,14 @@ const AnomalySection = () => {
 
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  // Format the total impact value for display, ensuring we handle the value properly
   const formattedTotalImpact = totalImpactValue !== 0 && totalImpactValue !== null
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00';
   
-  // Calculate resolution rate
   const resolutionRate = anomaliesData.length > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
 
-  // Debug logging to track the values being passed to AnomalySummaryCards
   useEffect(() => {
     console.log('AnomalySection debug - totalAnomaliesCount:', totalAnomaliesCount);
     console.log('AnomalySection debug - totalImpactValue:', totalImpactValue);
@@ -322,8 +316,8 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Explicitly pass the values to AnomalySummaryCards, ensuring they're properly formatted */}
         <AnomalySummaryCards 
+          key={`summary-${totalAnomaliesCount}-${totalImpactValue}`}
           totalAnomalies={totalAnomaliesCount || 0}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
@@ -425,7 +419,6 @@ const AnomalySection = () => {
               </Tabs>
             </CardHeader>
             <CardContent>
-              {/* Content moved to TabsContent components */}
             </CardContent>
             <CardFooter>
               <Button className="w-full">Export Anomaly Insights</Button>
