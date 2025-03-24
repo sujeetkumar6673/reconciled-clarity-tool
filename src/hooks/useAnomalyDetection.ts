@@ -165,8 +165,8 @@ export const useAnomalyDetection = ({
                     ? Object.keys(result.data[0]).filter(key => key !== '__proto__')
                     : [];
                   
-                  // Set the anomaly count based on the JSON data if not already set
-                  if (totalAnomaliesCount === 0) {
+                  // Set the anomaly count based on the JSON data if not already set from API response
+                  if (totalAnomaliesCount === 0 && jsonData.length > 0) {
                     setTotalAnomaliesCount(jsonData.length);
                   }
                   

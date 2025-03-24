@@ -299,8 +299,8 @@ const AnomalySection = () => {
   // Calculate summary data
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  // Format total impact for display - use the actual totalImpactValue from the API if available
-  const formattedTotalImpact = totalImpactValue 
+  // Format total impact for display - use the actual totalImpactValue from the API
+  const formattedTotalImpact = totalImpactValue !== 0
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00'; 
   
@@ -332,7 +332,7 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Always pass actual values to summary cards, never undefined */}
+        {/* Always pass actual values to summary cards */}
         <AnomalySummaryCards 
           totalAnomalies={totalAnomaliesCount}
           totalImpact={formattedTotalImpact}
