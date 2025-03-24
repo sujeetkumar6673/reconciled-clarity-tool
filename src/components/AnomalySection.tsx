@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import AnomalyTrendChart from './anomaly/AnomalyTrendChart';
 import AnomalyList from './anomaly/AnomalyList';
 import { AnomalyItem } from './anomaly/AnomalyCard';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
+import { DynamicColumnData } from '@/lib/csv-parser';
 
 // Enhanced mock data for anomalies with AI insights
 const anomalyData: AnomalyItem[] = [
@@ -196,7 +198,38 @@ const AnomalySection = () => {
   } = useAnomalyDetection({
     onAnomalyDataReceived: (data, headers) => {
       console.log('Received anomaly data:', data);
-      setDisplayData(data as AnomalyItem[]);
+      
+      // Transform DynamicColumnData to AnomalyItem to fix the type mismatch
+      const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
+        // Create a properly typed AnomalyItem from the DynamicColumnData
+        return {
+          id: Number(item.id.replace('anomaly-', '')) || index,
+          title: item.title as string || `Anomaly ${index + 1}`,
+          description: item.description as string || 'No description available',
+          severity: item.severity as string || 'medium',
+          category: item.category as string || 'unclassified',
+          date: item.date as string || new Date().toISOString().split('T')[0],
+          impact: item.impact as string || '$0.00',
+          status: item.status as string || 'unresolved',
+          bucket: item.bucket as string,
+          anomalyCount: typeof item.anomalyCount === 'number' 
+            ? item.anomalyCount 
+            : typeof item.anomalyCount === 'string' 
+              ? parseInt(item.anomalyCount, 10) 
+              : undefined,
+          rootCauses: Array.isArray(item.rootCauses) 
+            ? item.rootCauses as string[] 
+            : undefined,
+          suggestedActions: Array.isArray(item.suggestedActions) 
+            ? item.suggestedActions as string[] 
+            : undefined,
+          sampleRecords: Array.isArray(item.sampleRecords) 
+            ? item.sampleRecords 
+            : undefined,
+        };
+      });
+      
+      setDisplayData(transformedData);
     }
   });
 
@@ -274,11 +307,6 @@ const AnomalySection = () => {
   const resolutionRate = resolvedCount > 0 
     ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
-
-  // For development/testing purposes, you can trigger detectAnomalies on component mount
-  // useEffect(() => {
-  //   detectAnomalies();
-  // }, []);
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
