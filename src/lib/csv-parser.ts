@@ -1,4 +1,3 @@
-
 import { ReconciliationData } from '@/components/FileUpload';
 
 export interface DynamicColumnData {
@@ -6,10 +5,10 @@ export interface DynamicColumnData {
   id: string;
   source: string;
   status: 'Reconciled' | 'Pending' | 'Unmatched';
-  dataType: 'current' | 'historical';
+  dataType: 'current' | 'historical' | 'anomaly';
 }
 
-export function parseCSV(csvText: string, fileName: string, dataType: 'current' | 'historical'): DynamicColumnData[] {
+export function parseCSV(csvText: string, fileName: string, dataType: 'current' | 'historical' | 'anomaly'): DynamicColumnData[] {
   // Split the CSV text into lines
   const lines = csvText.split('\n').filter(line => line.trim() !== '');
   

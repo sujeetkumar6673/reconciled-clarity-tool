@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FileUp, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,7 +46,6 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
     setIsUploading(true);
     setUploadProgress(0);
     
-    // Simulate progress
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 90) {
@@ -59,15 +57,12 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
     }, 500);
 
     try {
-      // Toast notification for file processing
       const fileToastId = toast.loading(`Processing ${selectedFile.name}...`);
       
       try {
-        // Call API to process the file and split it
         const endpoint = '/split-file';
         await uploadFileToAPI(selectedFile, endpoint);
         
-        // If successful, request the split files from the API
         const response = await fetch(`${API_BASE_URL}/get-split-files`, {
           method: 'GET',
           headers: {
@@ -81,19 +76,14 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
         
         const result = await response.json();
         
-        // Process the two files and extract data
         let file1Data: DynamicColumnData[] = [];
         let file2Data: DynamicColumnData[] = [];
         let headers: string[] = [];
         let actions: any[] = [];
         
-        // Mock processing - in a real scenario, you'd parse the response from the API
-        // For now, we'll simulate the API response by parsing the uploaded file
         const text = await selectedFile.text();
         const allData = parseCSV(text, selectedFile.name, 'anomaly');
         
-        // Simulate splitting the data into two files
-        // In a real app, this would come from the API response
         const splitIndex = Math.ceil(allData.length * 0.3);
         file1Data = allData.slice(0, splitIndex).map(item => ({
           ...item,
@@ -106,12 +96,10 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
           type: 'processed'
         }));
         
-        // Extract headers from the file data
         if (allData.length > 0) {
           headers = Object.keys(allData[0]);
         }
         
-        // Create mock actions based on the anomalies
         const actionTypes = [
           { keyword: 'duplicate', icon: 'FileText', type: 'duplicate-resolution' },
           { keyword: 'missing', icon: 'Search', type: 'missing-data-check' },
@@ -119,7 +107,6 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
           { keyword: 'training', icon: 'GraduationCap', type: 'schedule-training' }
         ];
         
-        // Create 3 mock actions from the anomaly data
         actions = file1Data.slice(0, 3).map((anomaly, index) => ({
           id: index + 1,
           title: `Fix ${anomaly.type || 'Anomaly'} in ${anomaly.account || 'Account'}`,
@@ -132,21 +119,16 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
           fullText: `This is a detailed explanation of the action to take for the ${anomaly.type || 'anomaly'} in ${anomaly.account || 'this account'}.`
         }));
         
-        // Complete progress
         setUploadProgress(100);
         clearInterval(progressInterval);
         
-        // Successful notification
         toast.success(`Successfully processed ${selectedFile.name}`, { id: fileToastId });
         
-        // Call the callback with the processed data
         onFileSplitComplete(file1Data, file2Data, headers, actions);
       } catch (error) {
         console.error('Error processing file:', error);
         toast.error(`Error processing file: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: fileToastId });
         
-        // For demo purposes, we'll create some mock data even on failure
-        // Remove this in production and rely on actual API responses
         const text = await selectedFile.text();
         const allData = parseCSV(text, selectedFile.name, 'anomaly');
         const splitIndex = Math.ceil(allData.length * 0.3);
@@ -154,7 +136,6 @@ export const SingleFileUpload: React.FC<SingleFileUploadProps> = ({ onFileSplitC
         const file2Data = allData.slice(splitIndex);
         const headers = allData.length > 0 ? Object.keys(allData[0]) : [];
         
-        // Mock actions
         const actions = [
           {
             id: 1,
