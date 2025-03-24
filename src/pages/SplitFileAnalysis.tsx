@@ -31,6 +31,7 @@ const SplitFileAnalysis = () => {
   const [showTable, setShowTable] = useState(false);
   const [file1Data, setFile1Data] = useState<DynamicColumnData[]>([]);
   const [file2Data, setFile2Data] = useState<DynamicColumnData[]>([]);
+  const [originalFileData, setOriginalFileData] = useState<DynamicColumnData[]>([]);
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [uploadedFilename, setUploadedFilename] = useState<string>('');
   const [ruleSuggestions, setRuleSuggestions] = useState<RuleSuggestion[]>([]);
@@ -39,6 +40,7 @@ const SplitFileAnalysis = () => {
   const { updateAnomalyStats } = useAnomalyContext();
 
   const handleFileSplitComplete = (
+    originalData: DynamicColumnData[],
     file1Data: DynamicColumnData[],
     file2Data: DynamicColumnData[],
     headers: string[],
@@ -46,6 +48,7 @@ const SplitFileAnalysis = () => {
     filename: string,
     stats: ReconciliationStats | null
   ) => {
+    setOriginalFileData(originalData);
     setFile1Data(file1Data);
     setFile2Data(file2Data);
     setTableHeaders(headers);
@@ -209,13 +212,28 @@ const SplitFileAnalysis = () => {
             <div className="max-w-6xl mx-auto animate-fade-in-up">
               <h2 className="text-2xl font-medium text-center mb-8">Reconciliation Data</h2>
               
-              <Tabs defaultValue="file1" className="w-full">
+              <Tabs defaultValue="original" className="w-full">
                 <div className="flex justify-center mb-6">
                   <TabsList>
+                    <TabsTrigger value="original" className="px-6">Original Data</TabsTrigger>
                     <TabsTrigger value="file1" className="px-6">Catalyst Data</TabsTrigger>
                     <TabsTrigger value="file2" className="px-6">Impact Data</TabsTrigger>
                   </TabsList>
                 </div>
+                
+                <TabsContent value="original">
+                  <h3 className="text-xl font-medium text-center mb-6">Original File Data</h3>
+                  {originalFileData.length > 0 ? (
+                    <DynamicTable data={originalFileData} headers={tableHeaders} />
+                  ) : (
+                    <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                      <h3 className="text-xl font-medium mb-2">No Original Data Available</h3>
+                      <p className="text-muted-foreground max-w-xl mx-auto mb-4">
+                        The original file does not contain any data.
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
                 
                 <TabsContent value="file1">
                   <h3 className="text-xl font-medium text-center mb-6">Catalyst Data</h3>
