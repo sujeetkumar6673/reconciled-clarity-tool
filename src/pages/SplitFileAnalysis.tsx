@@ -11,6 +11,7 @@ import { useAnomalyContext } from '@/context/AnomalyContext';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { API_BASE_URL } from '@/utils/apiUtils';
+import ReconciliationStatsCard, { ReconciliationStats } from '@/components/insights/ReconciliationStatsCard';
 
 interface RuleSuggestion {
   id?: number;
@@ -33,6 +34,7 @@ const SplitFileAnalysis = () => {
   const [uploadedFilename, setUploadedFilename] = useState<string>('');
   const [ruleSuggestions, setRuleSuggestions] = useState<RuleSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [reconciliationStats, setReconciliationStats] = useState<ReconciliationStats | null>(null);
   const { updateAnomalyStats } = useAnomalyContext();
 
   const handleFileSplitComplete = (
@@ -40,12 +42,14 @@ const SplitFileAnalysis = () => {
     file2Data: DynamicColumnData[],
     headers: string[],
     actions: any[],
-    filename: string
+    filename: string,
+    stats: ReconciliationStats | null
   ) => {
     setFile1Data(file1Data);
     setFile2Data(file2Data);
     setTableHeaders(headers);
     setUploadedFilename(filename);
+    setReconciliationStats(stats);
     setShowTable(true);
     
     const anomalyCount = file1Data.length;
@@ -169,6 +173,12 @@ const SplitFileAnalysis = () => {
         <>
           <section id="split-data" className="py-20 px-4 bg-gray-50 dark:bg-gray-900/50">
             <div className="max-w-6xl mx-auto animate-fade-in-up">
+              {reconciliationStats && (
+                <div className="mb-12">
+                  <ReconciliationStatsCard stats={reconciliationStats} />
+                </div>
+              )}
+              
               <div className="flex justify-center mb-8">
                 <Button 
                   className="px-8 text-lg"
