@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,6 @@ import { AnomalyItem } from './anomaly/AnomalyCard';
 import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { DynamicColumnData } from '@/lib/csv-parser';
 
-// Enhanced mock data for anomalies with AI insights
 const anomalyData: AnomalyItem[] = [
   { 
     id: 1, 
@@ -176,7 +174,6 @@ const anomalyData: AnomalyItem[] = [
   },
 ];
 
-// Mock data for chart
 const chartData = [
   { date: 'May 1', anomalies: 2, amount: 520 },
   { date: 'May 5', anomalies: 1, amount: 320 },
@@ -199,9 +196,7 @@ const AnomalySection = () => {
     onAnomalyDataReceived: (data, headers) => {
       console.log('Received anomaly data:', data);
       
-      // Transform DynamicColumnData to AnomalyItem to fix the type mismatch
       const transformedData: AnomalyItem[] = data.map((item: DynamicColumnData, index) => {
-        // Create a properly typed AnomalyItem from the DynamicColumnData
         return {
           id: Number(item.id?.replace('anomaly-', '')) || index,
           title: item.title as string || `Anomaly ${index + 1}`,
@@ -233,10 +228,8 @@ const AnomalySection = () => {
     }
   });
 
-  // Use API data or fallback to mock data if needed
   const anomaliesData = displayData.length > 0 ? displayData : anomalyData;
 
-  // Get unique buckets from the data
   const uniqueBuckets = Array.from(
     new Set(anomaliesData.map(a => a.bucket?.split(':')[0]).filter(Boolean))
   );
@@ -250,7 +243,6 @@ const AnomalySection = () => {
     return true;
   });
 
-  // For debugging - log the totalAnomaliesCount and totalImpactValue whenever they change
   useEffect(() => {
     console.log('AnomalySection - totalAnomaliesCount:', totalAnomaliesCount);
     console.log('AnomalySection - totalImpactValue:', totalImpactValue);
@@ -296,22 +288,16 @@ const AnomalySection = () => {
     }
   };
 
-  // Calculate summary data
   const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
   
-  // Format total impact for display - use the actual totalImpactValue from the API
   const formattedTotalImpact = totalImpactValue !== 0
     ? `$${Math.abs(totalImpactValue).toLocaleString()}`
     : '$0.00'; 
   
-  // Always default to 0% if no anomalies are resolved or if there are no anomalies at all
-  const resolutionRate = anomaliesData.length > 0 
-    ? (resolvedCount > 0 
-        ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
-        : '0%')
+  const resolutionRate = resolvedCount > 0 
+    ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
     : '0%';
 
-  // For debugging - log the data being passed to AnomalySummaryCards
   useEffect(() => {
     console.log('Values for AnomalySummaryCards:', {
       totalAnomaliesCount,
@@ -332,7 +318,6 @@ const AnomalySection = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Always pass actual values to summary cards */}
         <AnomalySummaryCards 
           totalAnomalies={totalAnomaliesCount}
           totalImpact={formattedTotalImpact}
@@ -341,10 +326,8 @@ const AnomalySection = () => {
           totalCount={anomaliesData.length}
         />
 
-        {/* Left column - Anomaly Chart */}
         <AnomalyTrendChart chartData={chartData} />
 
-        {/* Right column - Anomaly List */}
         <div className="lg:col-span-2 animate-fade-in animate-delay-200">
           <Card className="glass-card h-full">
             <CardHeader>
