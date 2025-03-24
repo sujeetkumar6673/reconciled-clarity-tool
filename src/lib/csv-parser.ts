@@ -5,10 +5,10 @@ export interface DynamicColumnData {
   id: string;
   source: string;
   status: 'Reconciled' | 'Pending' | 'Unmatched';
-  dataType: 'current' | 'historical' | 'anomaly';
+  dataType: 'current' | 'historical' | 'anomaly' | 'original';
 }
 
-export function parseCSV(csvText: string, fileName: string, dataType: 'current' | 'historical' | 'anomaly'): DynamicColumnData[] {
+export function parseCSV(csvText: string, fileName: string, dataType: 'current' | 'historical' | 'anomaly' | 'original'): DynamicColumnData[] {
   // Split the CSV text into lines
   const lines = csvText.split('\n').filter(line => line.trim() !== '');
   
