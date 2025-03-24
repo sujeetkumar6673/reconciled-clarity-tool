@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import FileUploadSection from '@/components/upload/FileUploadSection';
@@ -214,7 +213,7 @@ const Index = () => {
       {/* Anomaly Detection Section */}
       <section id="anomalies" className="py-20 px-4 bg-white dark:bg-gray-900">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
-          <AnomalySection />
+          <AnomalySection externalAnomalyStats={anomalyStats} />
         </div>
       </section>
       

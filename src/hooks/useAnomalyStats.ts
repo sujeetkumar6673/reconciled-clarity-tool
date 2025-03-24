@@ -15,22 +15,30 @@ export const useAnomalyStats = ({ onStatsChange }: UseAnomalyStatsProps = {}) =>
 
   const { totalAnomaliesCount, totalImpactValue, hasAnomalies } = stats;
 
-  // Log state updates for debugging
+  // Log state updates for debugging and call the callback
   useEffect(() => {
     console.log('useAnomalyStats - State updated:', { totalAnomaliesCount, totalImpactValue });
     
-    // Call onStatsChange when state updates
-    if (onStatsChange && (totalAnomaliesCount > 0 || totalImpactValue !== 0)) {
+    // Call onStatsChange when state updates, regardless of values
+    if (onStatsChange) {
       console.log('Calling onStatsChange from useEffect with:', { count: totalAnomaliesCount, impact: totalImpactValue });
       onStatsChange(totalAnomaliesCount, totalImpactValue);
     }
+    
+    // After a slight delay, call the callback again to ensure it wasn't missed
+    if (onStatsChange && (totalAnomaliesCount > 0 || totalImpactValue !== 0)) {
+      setTimeout(() => {
+        console.log('Delayed onStatsChange call with:', { count: totalAnomaliesCount, impact: totalImpactValue });
+        onStatsChange(totalAnomaliesCount, totalImpactValue);
+      }, 300);
+    }
   }, [totalAnomaliesCount, totalImpactValue, onStatsChange]);
 
-  // Simplified state update function for anomaly stats with enhanced callback handling
+  // State update function with direct callback
   const updateAnomalyStats = useCallback((count: number, impact: number) => {
     console.log(`Setting anomaly stats - count: ${count}, impact: ${impact}`);
     
-    // Force update with new values directly
+    // Update state
     setStats({
       totalAnomaliesCount: count,
       totalImpactValue: impact,

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AlertTriangle, Filter, ArrowUpDown, FileText, DollarSign, Calendar, Clock, Briefcase, Layers, ArrowUp, ArrowDown, RefreshCw, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,178 +12,14 @@ import { useAnomalyDetection } from '@/hooks/useAnomalyDetection';
 import { DynamicColumnData } from '@/lib/csv-parser';
 import { toast } from 'sonner';
 
-const anomalyData: AnomalyItem[] = [
-  { 
-    id: 1, 
-    title: 'Inconsistent Variations in Outstanding Balances', 
-    description: 'Several accounts showing inconsistent variations that exceed the normal threshold',
-    severity: 'high',
-    category: 'balance',
-    date: '2023-05-22',
-    impact: '$17,000.00',
-    status: 'unresolved',
-    bucket: 'Bucket 1: Inconsistent Variations in Outstanding Balances',
-    anomalyCount: 17,
-    rootCauses: [
-      'Data entry errors leading to temporary inconsistencies',
-      'Timing differences in recording transactions',
-      'Misalignment in reconciliation processes or methodologies'
-    ],
-    suggestedActions: [
-      'Conduct a detailed review of data entry processes to ensure accuracy',
-      'Align transaction recording timing between systems',
-      'Standardize reconciliation methodologies across departments'
-    ],
-    sampleRecords: [
-      {
-        company: 'Doyle Ltd',
-        account: '740',
-        primaryAccount: 'COMMERCIAL LOANS',
-        secondaryAccount: 'INTEREST RECEIVABLE',
-        glBalance: 83000,
-        iHubBalance: 83000,
-        anomalyScore: -0.0121,
-        balanceDifference: 0.0
-      },
-      {
-        company: 'Galloway-Wyatt',
-        account: '493',
-        primaryAccount: 'ALL LOB LOANS',
-        secondaryAccount: 'PRINCIPAL',
-        glBalance: 22000,
-        iHubBalance: 22000,
-        anomalyScore: -0.0216,
-        balanceDifference: 0.0
-      }
-    ]
-  },
-  { 
-    id: 2, 
-    title: 'No Clear Pattern, Deviation Exceeds Threshold', 
-    description: 'Account balances showing deviations that exceed thresholds without clear patterns',
-    severity: 'medium',
-    category: 'unclassified',
-    date: '2023-05-18',
-    impact: '$17,000.00',
-    status: 'unresolved',
-    bucket: 'Bucket 11: No Clear Pattern, but Deviation Exceeds Threshold',
-    anomalyCount: 7,
-    rootCauses: [
-      'Unusual transactions that do not follow historical patterns',
-      'Errors in threshold settings or detection algorithms'
-    ],
-    suggestedActions: [
-      'Investigate each case individually to identify unique causes',
-      'Review and adjust threshold settings and anomaly detection algorithms'
-    ],
-    sampleRecords: [
-      {
-        company: 'Abbott-Munoz',
-        account: '327',
-        primaryAccount: 'RETAIL LOANS',
-        secondaryAccount: 'DEFERRED COSTS',
-        glBalance: 88000,
-        iHubBalance: 105000,
-        anomalyScore: -0.0275,
-        balanceDifference: -17000
-      }
-    ]
-  },
-  { 
-    id: 3, 
-    title: 'Consistent Increase/Decrease in Balances', 
-    description: 'Systematic trend of increases or decreases in account balances',
-    severity: 'high',
-    category: 'missing',
-    date: '2023-05-15',
-    impact: '$9,000.00',
-    status: 'unresolved',
-    bucket: 'Bucket 2: Consistent Increase or Decrease in Outstanding Balances',
-    anomalyCount: 6,
-    rootCauses: [
-      'Systematic errors in transaction processing',
-      'Consistent misreporting or misclassification of transactions'
-    ],
-    suggestedActions: [
-      'Audit transaction processing systems for systematic errors',
-      'Implement checks for consistent misreporting or misclassification'
-    ],
-    sampleRecords: [
-      {
-        company: 'Mcclain, Miller and Henderson',
-        account: '298',
-        primaryAccount: 'RETAIL LOANS',
-        secondaryAccount: 'INTEREST RECEIVABLE',
-        glBalance: 32000,
-        iHubBalance: 23000,
-        anomalyScore: -0.0190,
-        balanceDifference: 9000
-      }
-    ]
-  },
-  { 
-    id: 4, 
-    title: 'Reversal or Correction Entry Detected', 
-    description: 'Evidence of reversal or correction entries that require validation',
-    severity: 'low',
-    category: 'timing',
-    date: '2023-05-10',
-    impact: '$11,000.00',
-    status: 'resolved',
-    bucket: 'Bucket 8: Reversal or Correction Entry Detected',
-    anomalyCount: 3,
-    rootCauses: [
-      'Reversal entries made to correct prior errors',
-      'Adjustments not properly documented or communicated'
-    ],
-    suggestedActions: [
-      'Ensure all reversal and correction entries are properly documented',
-      'Enhance communication protocols for adjustments'
-    ],
-    sampleRecords: [
-      {
-        company: 'Guzman, Hoffman and Baldwin',
-        account: '365',
-        primaryAccount: 'COMMERCIAL LOANS',
-        secondaryAccount: 'DEFERRED COSTS',
-        glBalance: 82000,
-        iHubBalance: 93000,
-        anomalyScore: -0.0730,
-        balanceDifference: -11000
-      }
-    ]
-  },
-  { 
-    id: 5, 
-    title: 'Balances Not in Line with Previous Months', 
-    description: 'Account balances showing unexpected deviations from historical patterns',
-    severity: 'medium',
-    category: 'unclassified',
-    date: '2023-05-12',
-    impact: '$1,532.80',
-    status: 'unresolved',
-    bucket: 'Bucket 4: Outstanding Balances Not in Line with Previous Months',
-    anomalyCount: 3,
-    rootCauses: [
-      'Seasonal fluctuations not accounted for in analysis',
-      'Changes in business operations or external factors'
-    ],
-    suggestedActions: [
-      'Incorporate seasonal adjustments into analysis',
-      'Investigate changes in business operations or external factors impacting balances'
-    ]
-  },
-];
+interface AnomalySectionProps {
+  externalAnomalyStats?: {
+    count: number;
+    impact: number;
+  };
+}
 
-const chartData = [
-  { date: 'May 1', anomalies: 2, amount: 520 },
-  { date: 'May 5', anomalies: 1, amount: 320 },
-  { date: 'May 10', anomalies: 4, amount: 1240 },
-  { date: 'May 15', anomalies: 3, amount: 890 },
-  { date: 'May 20', anomalies: 5, amount: 2300 },
-];
-
-const AnomalySection = () => {
+const AnomalySection = ({ externalAnomalyStats }: AnomalySectionProps = {}) => {
   const [selectedTab, setSelectedTab] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
@@ -193,10 +28,12 @@ const AnomalySection = () => {
   const forceUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [localAnomaly, setLocalAnomaly] = useState({
-    totalAnomalies: 0,
-    totalImpact: '$0.00',
+    totalAnomalies: externalAnomalyStats?.count || 0,
+    totalImpact: externalAnomalyStats?.impact 
+      ? `$${Math.abs(externalAnomalyStats.impact).toLocaleString()}` 
+      : '$0.00',
     resolvedCount: 0,
-    totalCount: 0
+    totalCount: externalAnomalyStats?.count || 0
   });
   
   const handleAnomalyDataReceived = useCallback((data: DynamicColumnData[], headers: string[]) => {
@@ -252,7 +89,6 @@ const AnomalySection = () => {
       ? `$${Math.abs(impact).toLocaleString()}`
       : '$0.00';
     
-    // DIRECT STATE UPDATE without prevState to avoid stale data
     setLocalAnomaly({
       totalAnomalies: count,
       totalImpact: formattedImpact,
@@ -267,14 +103,12 @@ const AnomalySection = () => {
       totalCount: Math.max(count, localAnomaly.totalCount)
     });
     
-    // Always force a re-render
     setRefreshKey(prev => prev + 1);
     
     if (forceUpdateTimeoutRef.current) {
       clearTimeout(forceUpdateTimeoutRef.current);
     }
     
-    // Double-check with a delayed update
     forceUpdateTimeoutRef.current = setTimeout(() => {
       console.log('Forcing refresh after stats change');
       setRefreshKey(prev => prev + 1);
@@ -292,7 +126,6 @@ const AnomalySection = () => {
     onAnomalyStatsChange: handleStatsChange
   });
 
-  // Force re-render when props from hook change
   useEffect(() => {
     console.log('AnomalySection - Hook values updated:', { totalAnomaliesCount, totalImpactValue });
     
@@ -301,7 +134,6 @@ const AnomalySection = () => {
         ? `$${Math.abs(totalImpactValue).toLocaleString()}`
         : '$0.00';
       
-      // Direct update without relying on prevState
       setLocalAnomaly({
         totalAnomalies: totalAnomaliesCount,
         totalImpact: formattedImpact,
@@ -316,12 +148,10 @@ const AnomalySection = () => {
         totalCount: Math.max(totalAnomaliesCount, localAnomaly.totalCount)
       });
       
-      // Force re-render
       setRefreshKey(prev => prev + 1);
     }
   }, [totalAnomaliesCount, totalImpactValue, localAnomaly.resolvedCount, localAnomaly.totalCount]);
 
-  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (forceUpdateTimeoutRef.current) {
@@ -512,6 +342,9 @@ const AnomalySection = () => {
 
       <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-md text-xs">
         <p>Debug: Anomaly Count: {localAnomaly.totalAnomalies}, Impact: {localAnomaly.totalImpact}, Render Key: {refreshKey}</p>
+        {externalAnomalyStats && (
+          <p>External Stats: Count: {externalAnomalyStats.count}, Impact: ${Math.abs(externalAnomalyStats.impact).toLocaleString()}</p>
+        )}
       </div>
     </div>
   );
