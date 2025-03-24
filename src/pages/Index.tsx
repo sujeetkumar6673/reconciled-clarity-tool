@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import FileUploadSection from '@/components/upload/FileUploadSection';
@@ -112,6 +113,9 @@ const Index = () => {
             </Button>
             <Button size="lg" variant="outline" className="px-8 py-6 rounded-full text-lg" asChild>
               <Link to="/learn-more">Learn More</Link>
+            </Button>
+            <Button size="lg" variant="secondary" className="px-8 py-6 rounded-full text-lg" asChild>
+              <Link to="/split-file-analysis">Split File Analysis</Link>
             </Button>
           </div>
 
@@ -241,7 +245,7 @@ const Index = () => {
             <div className="flex space-x-8">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">About</a>
               <a href="#" className="text-gray-300 hover:text-white transition-colors">Features</a>
-              <a href="#" className="text-gray-300 hover:text-white transition-colors">Pricing</a>
+              <Link to="/split-file-analysis" className="text-gray-300 hover:text-white transition-colors">Split File Analysis</Link>
               <a href="#" className="text-gray-300 hover:text-white transition-colors">Contact</a>
             </div>
           </div>
