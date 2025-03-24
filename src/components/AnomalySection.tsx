@@ -241,10 +241,27 @@ const AnomalySection = () => {
     return true;
   });
 
+  const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
+  
+  const formattedTotalImpact = totalImpactValue !== 0 
+    ? `$${Math.abs(totalImpactValue).toLocaleString()}`
+    : '$0.00';
+  
+  const resolutionRate = anomaliesData.length > 0 
+    ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
+    : '0%';
+
   useEffect(() => {
     console.log('AnomalySection - totalAnomaliesCount:', totalAnomaliesCount);
     console.log('AnomalySection - totalImpactValue:', totalImpactValue);
-  }, [totalAnomaliesCount, totalImpactValue]);
+    console.log('Values for AnomalySummaryCards:', {
+      totalAnomalies: totalAnomaliesCount,
+      formattedTotalImpact,
+      resolutionRate,
+      resolvedCount,
+      totalCount: anomaliesData.length
+    });
+  }, [totalAnomaliesCount, totalImpactValue, formattedTotalImpact, resolutionRate, resolvedCount, anomaliesData.length]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -286,28 +303,6 @@ const AnomalySection = () => {
     }
   };
 
-  const resolvedCount = anomaliesData.filter(a => a.status === 'resolved').length;
-  
-  const formattedTotalImpact = totalImpactValue !== 0
-    ? `$${Math.abs(totalImpactValue).toLocaleString()}`
-    : '$0.00'; 
-  
-  const resolutionRate = anomaliesData.length > 0 
-    ? (resolvedCount > 0 
-        ? `${Math.round((resolvedCount / anomaliesData.length) * 100)}%` 
-        : '0%')
-    : '0%';
-
-  useEffect(() => {
-    console.log('Values for AnomalySummaryCards:', {
-      totalAnomalies: totalAnomaliesCount || 0,
-      formattedTotalImpact,
-      resolutionRate,
-      resolvedCount,
-      totalCount: anomaliesData.length
-    });
-  }, [totalAnomaliesCount, formattedTotalImpact, resolutionRate, resolvedCount, anomaliesData.length]);
-
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       <div className="mb-8">
@@ -319,7 +314,7 @@ const AnomalySection = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <AnomalySummaryCards 
-          totalAnomalies={totalAnomaliesCount || 0}
+          totalAnomalies={totalAnomaliesCount || anomaliesData.length}
           totalImpact={formattedTotalImpact}
           resolutionRate={resolutionRate}
           resolvedCount={resolvedCount}

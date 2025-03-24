@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { DynamicColumnData } from '@/lib/csv-parser';
@@ -137,18 +136,15 @@ export const useAnomalyDetection = ({
             
             // Extract data from the API response
             if (result) {
-              // Important: Update totalAnomaliesCount SYNCHRONOUSLY
+              // Important: Update totalAnomaliesCount and totalImpactValue immediately
               if (typeof result.anomaly_count === 'number') {
                 console.log(`Received anomaly_count: ${result.anomaly_count}`);
-                const anomalyCount = result.anomaly_count;
-                setTotalAnomaliesCount(anomalyCount);
+                setTotalAnomaliesCount(result.anomaly_count);
               }
               
-              // Important: Update totalImpactValue SYNCHRONOUSLY 
               if (typeof result.total_impact === 'number') {
                 console.log(`Received total_impact: ${result.total_impact}`);
-                const impactValue = result.total_impact;
-                setTotalImpactValue(impactValue);
+                setTotalImpactValue(result.total_impact);
               }
               
               if (result.data && Array.isArray(result.data)) {
