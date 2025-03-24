@@ -1,13 +1,9 @@
+
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { AnomalyItem, InsightResponse, UseAnomalyInsightsProps } from '@/types/anomaly';
 import { API_BASE_URL, getSeverityByBucketId, getCategoryByBucketId, generateSampleRecordsFromCompanies } from '@/utils/anomalyUtils';
 import { useAnomalyContext } from '@/context/AnomalyContext';
-
-export interface UseAnomalyInsightsProps {
-  onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
-  apiKey?: string | null;
-}
 
 export const useAnomalyInsights = ({ 
   onAnomalyInsightsReceived,

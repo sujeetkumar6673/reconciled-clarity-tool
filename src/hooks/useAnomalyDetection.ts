@@ -8,14 +8,6 @@ import { useAnomalyFileDownload } from './useAnomalyFileDownload';
 import { useAnomalyStats } from './useAnomalyStats';
 import { useAnomalyApiClient } from './useAnomalyApiClient';
 
-// Update the interface to include optional apiKey
-export interface UseAnomalyDetectionProps {
-  onAnomalyDataReceived?: (data: DynamicColumnData[], headers: string[]) => void;
-  onAnomalyInsightsReceived?: (anomalies: AnomalyItem[]) => void;
-  onAnomalyStatsChange?: (count: number, impact: number) => void;
-  apiKey?: string | null;
-}
-
 export const useAnomalyDetection = ({ 
   onAnomalyDataReceived, 
   onAnomalyInsightsReceived,
