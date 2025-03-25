@@ -45,6 +45,7 @@ const LearnMore: React.FC = () => {
               <ul>
                 <li><a href="#introduction" className="no-underline hover:underline text-blue-600 dark:text-blue-400">Introduction</a></li>
                 <li><a href="#demo" className="no-underline hover:underline text-blue-600 dark:text-blue-400">Demo</a></li>
+                <li><a href="#catalyst-impact" className="no-underline hover:underline text-blue-600 dark:text-blue-400">Catalyst vs Impact Reconciliation</a></li>
                 <li><a href="#inspiration" className="no-underline hover:underline text-blue-600 dark:text-blue-400">Inspiration</a></li>
                 <li><a href="#what-it-does" className="no-underline hover:underline text-blue-600 dark:text-blue-400">What It Does</a></li>
                 <li><a href="#how-we-built-it" className="no-underline hover:underline text-blue-600 dark:text-blue-400">How We Built It</a></li>
@@ -67,7 +68,69 @@ const LearnMore: React.FC = () => {
                 <a href="#screenshots" className="text-blue-600 dark:text-blue-400 hover:underline">📷 Screenshots</a>
               </p>
               
-              <h2 id="screenshots" className="text-2xl font-semibold mt-8 mb-4">📷 Screenshots</h2>
+              <h2 id="catalyst-impact" className="text-2xl font-semibold mt-8 mb-4">🔍 Catalyst vs Impact Reconciliation</h2>
+              <p>
+                The core of our application is the Catalyst vs Impact reconciliation feature that allows users to upload, analyze, and reconcile financial data from different systems. Below are key screenshots showcasing this functionality.
+              </p>
+              
+              <div className="grid grid-cols-1 gap-6 my-6">
+                <div className="rounded-lg overflow-hidden border dark:border-gray-700">
+                  <img 
+                    src="/lovable-uploads/a8300661-1878-4818-a458-8c89df337b4c.png" 
+                    alt="Catalyst vs Impact Reconciliation interface" 
+                    className="w-full h-auto"
+                  />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-800">
+                    Main interface for Catalyst vs Impact Reconciliation with file upload option
+                  </p>
+                </div>
+                
+                <div className="rounded-lg overflow-hidden border dark:border-gray-700">
+                  <img 
+                    src="/lovable-uploads/9fec204c-1840-4ab8-adf2-500c1c7aad15.png" 
+                    alt="Upload Pre-Analyzed File interface" 
+                    className="w-full h-auto"
+                  />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-800">
+                    Upload interface for pre-analyzed CSV files that will be split into Catalyst and Impact data
+                  </p>
+                </div>
+                
+                <div className="rounded-lg overflow-hidden border dark:border-gray-700">
+                  <img 
+                    src="/lovable-uploads/05b5dde6-ee6f-4d05-b7c4-5a88ffcceda2.png" 
+                    alt="Reconciliation Statistics dashboard" 
+                    className="w-full h-auto"
+                  />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-800">
+                    Reconciliation statistics showing match rate, issue rate, and detailed breakdown of match statuses
+                  </p>
+                </div>
+                
+                <div className="rounded-lg overflow-hidden border dark:border-gray-700">
+                  <img 
+                    src="/lovable-uploads/08af432b-557b-4072-adaa-b863ceed1598.png" 
+                    alt="AI-Powered Recommendations" 
+                    className="w-full h-auto"
+                  />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-800">
+                    AI-powered recommendations for resolving mismatches, with detailed suggestions and action buttons
+                  </p>
+                </div>
+                
+                <div className="rounded-lg overflow-hidden border dark:border-gray-700">
+                  <img 
+                    src="/lovable-uploads/c102b4af-fc06-4c85-9570-8b6f6b817d1a.png" 
+                    alt="Reconciliation data table" 
+                    className="w-full h-auto"
+                  />
+                  <p className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-800">
+                    Detailed reconciliation data table with filtering options
+                  </p>
+                </div>
+              </div>
+              
+              <h2 id="screenshots" className="text-2xl font-semibold mt-8 mb-4">📷 Other Screenshots</h2>
               <div className="grid grid-cols-1 gap-6 my-6">
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
@@ -79,6 +142,7 @@ const LearnMore: React.FC = () => {
                     Smart-Recon landing page with navigation menu and main options
                   </p>
                 </div>
+                
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
                     src="/lovable-uploads/5e4a0011-2b34-4b88-9b11-d27e3e8443bd.png" 
@@ -89,6 +153,7 @@ const LearnMore: React.FC = () => {
                     File upload interface for current and historical data reconciliation
                   </p>
                 </div>
+                
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
                     src="/lovable-uploads/7ece8ee1-60cd-413a-aefc-b2118f2ae71b.png" 
@@ -97,16 +162,6 @@ const LearnMore: React.FC = () => {
                   />
                   <p className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-800">
                     AI-Enhanced Anomaly Detection dashboard showing stats, trends and insights
-                  </p>
-                </div>
-                <div className="rounded-lg overflow-hidden border dark:border-gray-700">
-                  <img 
-                    src="/lovable-uploads/c102b4af-fc06-4c85-9570-8b6f6b817d1a.png" 
-                    alt="Reconciliation data table" 
-                    className="w-full h-auto"
-                  />
-                  <p className="text-sm text-gray-500 dark:text-gray-400 p-2 bg-gray-50 dark:bg-gray-800">
-                    Detailed reconciliation data table with filtering options
                   </p>
                 </div>
               </div>
