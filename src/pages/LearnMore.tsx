@@ -76,7 +76,7 @@ const LearnMore: React.FC = () => {
               <div className="grid grid-cols-1 gap-6 my-6">
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/a8300661-1878-4818-a458-8c89df337b4c.png" 
+                    src="/smartrecon-uploads/a8300661-1878-4818-a458-8c89df337b4c.png" 
                     alt="Catalyst vs Impact Reconciliation interface" 
                     className="w-full h-auto"
                   />
@@ -87,7 +87,7 @@ const LearnMore: React.FC = () => {
                 
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/9fec204c-1840-4ab8-adf2-500c1c7aad15.png" 
+                    src="/smartrecon-uploads/9fec204c-1840-4ab8-adf2-500c1c7aad15.png" 
                     alt="Upload Pre-Analyzed File interface" 
                     className="w-full h-auto"
                   />
@@ -98,7 +98,7 @@ const LearnMore: React.FC = () => {
                 
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/05b5dde6-ee6f-4d05-b7c4-5a88ffcceda2.png" 
+                    src="/smartrecon-uploads/05b5dde6-ee6f-4d05-b7c4-5a88ffcceda2.png" 
                     alt="Reconciliation Statistics dashboard" 
                     className="w-full h-auto"
                   />
@@ -109,7 +109,7 @@ const LearnMore: React.FC = () => {
                 
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/08af432b-557b-4072-adaa-b863ceed1598.png" 
+                    src="/smartrecon-uploads/08af432b-557b-4072-adaa-b863ceed1598.png" 
                     alt="AI-Powered Recommendations" 
                     className="w-full h-auto"
                   />
@@ -120,7 +120,7 @@ const LearnMore: React.FC = () => {
                 
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/c102b4af-fc06-4c85-9570-8b6f6b817d1a.png" 
+                    src="/smartrecon-uploads/c102b4af-fc06-4c85-9570-8b6f6b817d1a.png" 
                     alt="Reconciliation data table" 
                     className="w-full h-auto"
                   />
@@ -134,7 +134,7 @@ const LearnMore: React.FC = () => {
               <div className="grid grid-cols-1 gap-6 my-6">
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/afba84f0-85f1-4884-b88b-bbe3e19699d9.png" 
+                    src="/smartrecon-uploads/afba84f0-85f1-4884-b88b-bbe3e19699d9.png" 
                     alt="Smart-Recon landing page" 
                     className="w-full h-auto"
                   />
@@ -145,7 +145,7 @@ const LearnMore: React.FC = () => {
                 
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/5e4a0011-2b34-4b88-9b11-d27e3e8443bd.png" 
+                    src="/smartrecon-uploads/5e4a0011-2b34-4b88-9b11-d27e3e8443bd.png" 
                     alt="File upload interface" 
                     className="w-full h-auto"
                   />
@@ -156,7 +156,7 @@ const LearnMore: React.FC = () => {
                 
                 <div className="rounded-lg overflow-hidden border dark:border-gray-700">
                   <img 
-                    src="/lovable-uploads/7ece8ee1-60cd-413a-aefc-b2118f2ae71b.png" 
+                    src="/smartrecon-uploads/7ece8ee1-60cd-413a-aefc-b2118f2ae71b.png" 
                     alt="AI-Enhanced Anomaly Detection dashboard" 
                     className="w-full h-auto"
                   />
