@@ -17,8 +17,8 @@ import EmailNotificationDialog from './EmailNotificationDialog';
 import { ReconciliationStats } from './ReconciliationStatsCard';
 
 interface RuleSuggestion {
-  id?: number;
-  TRADEID?: number;
+  id?: string | number;
+  TRADEID?: string | number;
   MatchStatus?: string;
   RootCause?: string;
   SuggestedAction?: string;
@@ -31,7 +31,7 @@ interface RuleSuggestion {
 interface RuleSuggestionsPanelProps {
   suggestions: RuleSuggestion[];
   isLoading: boolean;
-  onIssueFixed?: (tradeId: number, matchStatus: string, updatedData: any) => void;
+  onIssueFixed?: (tradeId: string | number, matchStatus: string, updatedData: any) => void;
   onStatsUpdate?: (stats: ReconciliationStats) => void;
   reconciliationStats?: ReconciliationStats | null;
 }
@@ -58,7 +58,7 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
     setCurrentPage(page);
   };
 
-  const handleFixIssue = async (tradeId: number | undefined, matchStatus: string | undefined) => {
+  const handleFixIssue = async (tradeId: string | number | undefined, matchStatus: string | undefined) => {
     if (!tradeId) {
       toast.error('No Trade ID provided');
       return;
@@ -168,7 +168,7 @@ const RuleSuggestionsPanelProps: React.FC<RuleSuggestionsPanelProps> = ({
     setEmailDialogOpen(true);
   };
 
-  const handleRaiseTicket = async (tradeId: number | undefined, matchStatus: string | undefined, rootCause: string | undefined) => {
+  const handleRaiseTicket = async (tradeId: string | number | undefined, matchStatus: string | undefined, rootCause: string | undefined) => {
     if (!tradeId) {
       toast.error('No Trade ID provided');
       return;

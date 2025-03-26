@@ -32,7 +32,7 @@ export interface AnomalySampleRecord {
 
 // Anomaly item type for display
 export interface AnomalyItem {
-  id: number;
+  id: string | number;
   title: string;
   description: string;
   severity: string;
@@ -45,6 +45,7 @@ export interface AnomalyItem {
   rootCauses?: string[];
   suggestedActions?: string[];
   sampleRecords?: AnomalySampleRecord[];
+  tradeId?: string | number;
 }
 
 // Props for the anomaly detection hook

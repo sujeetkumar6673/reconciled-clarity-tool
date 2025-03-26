@@ -14,8 +14,8 @@ import { API_BASE_URL } from '@/utils/apiUtils';
 import ReconciliationStatsCard, { ReconciliationStats } from '@/components/insights/ReconciliationStatsCard';
 
 interface RuleSuggestion {
-  id?: number;
-  TRADEID?: number;
+  id?: string | number;
+  TRADEID?: string | number;
   MatchStatus?: string;
   RootCause?: string;
   SuggestedAction?: string;
@@ -84,7 +84,7 @@ const SplitFileAnalysis = () => {
     }, 100);
   };
   
-  const handleIssueFixed = useCallback((tradeId: number, matchStatus: string, updatedData: any) => {
+  const handleIssueFixed = useCallback((tradeId: string | number, matchStatus: string, updatedData: any) => {
     const tradeIdStr = tradeId.toString();
     
     setRuleSuggestions(prev => 
