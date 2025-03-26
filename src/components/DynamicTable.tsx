@@ -43,33 +43,48 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
     });
   };
 
+  // Get only columns that have data in the current dataset
+  const getNonEmptyColumns = (data: DynamicColumnData[]): Set<string> => {
+    const nonEmptyColumns = new Set<string>();
+    
+    data.forEach(row => {
+      Object.entries(row).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          nonEmptyColumns.add(key);
+        }
+      });
+    });
+    
+    return nonEmptyColumns;
+  };
+
   // Get all columns, prioritizing important ones and ensuring status/source are at the end
+  // But now also filtering out empty columns
   const columns = useMemo(() => {
     // Make a prioritized list of columns
     const priorityColumns = ['id', 'date', 'description', 'category', 'amount'];
     const endColumns = ['dataType', 'status', 'source'];
     
-    // Get all unique keys from data objects
-    const allKeys = new Set<string>();
-    data.forEach(item => {
-      Object.keys(item).forEach(key => allKeys.add(key));
-    });
+    // Get all unique keys from data objects that have values
+    const nonEmptyColumns = getNonEmptyColumns(data);
     
     // Deduplicate headers to ensure no duplicates in the actual displayed columns
     const deduplicatedHeaders = deduplicateHeaders(headers);
     
-    // Start with priority columns (that exist in the data)
-    const result: string[] = priorityColumns.filter(col => allKeys.has(col));
+    // Start with priority columns (that exist in the data and have values)
+    const result: string[] = priorityColumns.filter(col => nonEmptyColumns.has(col));
     
     // Add deduplicated headers that aren't already in the result or in endColumns
+    // but only if they have data
     deduplicatedHeaders.forEach(header => {
-      if (!result.includes(header) && !endColumns.includes(header)) {
+      if (!result.includes(header) && !endColumns.includes(header) && nonEmptyColumns.has(header)) {
         result.push(header);
       }
     });
     
     // Add any remaining keys from the data that aren't already included
-    Array.from(allKeys).forEach(key => {
+    // but only if they have data
+    Array.from(nonEmptyColumns).forEach(key => {
       if (!result.includes(key) && !endColumns.includes(key)) {
         result.push(key);
       }
@@ -77,7 +92,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ data, headers }) => {
     
     // End with dataType, status and source (if they exist in the data)
     endColumns.forEach(col => {
-      if (allKeys.has(col)) {
+      if (nonEmptyColumns.has(col)) {
         result.push(col);
       }
     });
