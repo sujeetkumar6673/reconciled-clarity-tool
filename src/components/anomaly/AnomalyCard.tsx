@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, DollarSign, Info, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +11,7 @@ import {
 } from '@/components/ui/accordion';
 
 export interface AnomalyItem {
-  id: number;
+  id: string | number;
   title: string;
   description: string;
   severity: string;
@@ -26,6 +25,7 @@ export interface AnomalyItem {
   rootCauses?: string[];
   suggestedActions?: string[];
   sampleRecords?: AnomalySampleRecord[];
+  tradeId?: string | number;
 }
 
 export interface AnomalySampleRecord {
